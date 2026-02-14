@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skills Catalog</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    :root {
+      --bg-primary: #0d1220;
+      --bg-secondary: #141c2c;
+      --bg-tertiary: #1c2638;
+      --text-primary: #f0f2f5;
+      --text-secondary: #c0c8d4;
+      --text-muted: #8a919d;
+      --cyan: #12c2e9;
+      --purple: #c471ed;
+      --pink: #ff6b9d;
+      --teal: #2dd4bf;
+      --orange: #F39C12;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+    .container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2rem;
+      font-size: 0.85rem;
+    }
+    nav a { color: var(--text-muted); text-decoration: none; }
+    nav a:hover { color: var(--cyan); }
+    nav span { color: var(--text-muted); }
+    header { margin-bottom: 2rem; }
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--cyan);
+      margin-bottom: 0.5rem;
+    }
+    header p { color: var(--text-muted); font-size: 0.95rem; }
+    .count-badge {
+      display: inline-block;
+      background: rgba(18, 194, 233, 0.15);
+      color: var(--cyan);
+      padding: 0.15rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-left: 0.5rem;
+    }
+    .search {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+      outline: none;
+    }
+    .search:focus { border-color: var(--cyan); }
+    .search::placeholder { color: var(--text-muted); }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .card:hover {
+      background: var(--bg-tertiary);
+      border-color: rgba(18, 194, 233, 0.3);
+      transform: translateY(-1px);
+    }
+    .card-name {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--cyan);
+      margin-bottom: 0.4rem;
+    }
+    .card-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .card-hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+    }
+    .empty {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-muted);
+    }
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      border-top: 1px solid var(--border);
+      margin-top: 2rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+    #loading { text-align: center; padding: 2rem; color: var(--text-muted); }
+
+    /* Modal / slide-over */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 100;
+      justify-content: flex-end;
+    }
+    .modal-overlay.open {
+      display: flex;
+    }
+    .modal-panel {
+      width: min(720px, 90vw);
+      height: 100vh;
+      background: var(--bg-primary);
+      border-left: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 2rem;
+      animation: slideIn 0.2s ease-out;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); }
+      to { transform: translateX(0); }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+    .modal-close {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+    .modal-close:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+    .modal-files {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .modal-files-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+    .modal-files-list {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      line-height: 1.8;
+    }
+    .modal-files-list .file-name { color: var(--cyan); }
+    .modal-files-list .file-workflow { color: var(--purple); }
+    .modal-files-list .file-tool { color: var(--teal); }
+
+    /* Rendered markdown styling */
+    .md-content {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+    .md-content h1 { font-size: 1.3rem; font-weight: 700; color: var(--cyan); margin: 1.5rem 0 0.75rem; }
+    .md-content h2 { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin: 1.25rem 0 0.5rem; }
+    .md-content h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-secondary); margin: 1rem 0 0.5rem; }
+    .md-content p { margin: 0.5rem 0; }
+    .md-content a { color: var(--cyan); }
+    .md-content code {
+      background: var(--bg-secondary);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.85em;
+      color: var(--pink);
+    }
+    .md-content pre {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      overflow-x: auto;
+      margin: 0.75rem 0;
+    }
+    .md-content pre code {
+      background: none;
+      padding: 0;
+      color: var(--text-secondary);
+    }
+    .md-content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.75rem 0;
+      font-size: 0.85rem;
+    }
+    .md-content th {
+      background: var(--bg-secondary);
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    .md-content td {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border);
+    }
+    .md-content ul, .md-content ol {
+      padding-left: 1.5rem;
+      margin: 0.5rem 0;
+    }
+    .md-content li { margin: 0.25rem 0; }
+    .md-content blockquote {
+      border-left: 3px solid var(--purple);
+      padding-left: 1rem;
+      margin: 0.75rem 0;
+      color: var(--text-muted);
+    }
+    .md-content hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1.5rem 0;
+    }
+    .md-content strong { color: var(--text-primary); }
+
+    /* YAML frontmatter block */
+    .frontmatter {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      white-space: pre-wrap;
+    }
+    .frontmatter .fm-key { color: var(--purple); }
+    .frontmatter .fm-val { color: var(--teal); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav id="pai-nav" data-page="Skills">
+      <a href="/">Portal</a>
+      <span>/</span>
+      <span>Skills</span>
+    </nav>
+
+    <header>
+      <h1>Skills Catalog <span class="count-badge" id="count">...</span></h1>
+      <p>Everything your AI assistant can do. Click any skill to see its full definition and learn how it works.</p>
+    </header>
+
+    <input type="text" class="search" id="search" placeholder="Filter skills..." autofocus>
+
+    <div id="listing">
+      <div id="loading">Loading skills...</div>
+    </div>
+
+    <footer id="pai-footer">
+      PAI Companion Portal
+    </footer>
+  </div>
+
+  <!-- Slide-over detail panel -->
+  <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+    <div class="modal-panel" id="modal-panel">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-title">Skill</div>
+        <button class="modal-close" onclick="closeModal()">Esc</button>
+      </div>
+      <div id="modal-files"></div>
+      <div class="md-content" id="modal-content">Loading...</div>
+    </div>
+  </div>
+
+  <script>
+    let allSkills = [];
+
+    async function loadSkills() {
+      const container = document.getElementById('listing');
+      try {
+        const res = await fetch('/api/skills');
+        allSkills = await res.json();
+        document.getElementById('count').textContent = allSkills.length;
+        renderSkills(allSkills);
+      } catch (e) {
+        container.innerHTML = '<div class="empty"><p>Could not load skills.</p></div>';
+      }
+    }
+
+    function renderSkills(skills) {
+      const container = document.getElementById('listing');
+      if (skills.length === 0) {
+        container.innerHTML = '<div class="empty"><p>No skills match your search.</p></div>';
+        return;
+      }
+      const grid = document.createElement('div');
+      grid.className = 'grid';
+      for (const skill of skills) {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.onclick = () => openSkill(skill.name);
+        card.innerHTML = `
+          <div class="card-name">${esc(skill.name)}</div>
+          <div class="card-desc">${esc(skill.description)}</div>
+          <div class="card-hint">Click to view full definition</div>`;
+        grid.appendChild(card);
+      }
+      container.innerHTML = '';
+      container.appendChild(grid);
+    }
+
+    async function openSkill(name) {
+      const modal = document.getElementById('modal');
+      const title = document.getElementById('modal-title');
+      const content = document.getElementById('modal-content');
+      const filesDiv = document.getElementById('modal-files');
+
+      title.textContent = name;
+      content.innerHTML = '<p style="color:var(--text-muted)">Loading skill...</p>';
+      filesDiv.innerHTML = '';
+      modal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+
+      try {
+        const res = await fetch('/api/skill/' + encodeURIComponent(name));
+        const data = await res.json();
+
+        // Show file structure
+        if (data.files && data.files.length > 0) {
+          let filesHtml = '<div class="modal-files"><div class="modal-files-title">Skill Structure</div><div class="modal-files-list">';
+          for (const f of data.files) {
+            let cls = 'file-name';
+            if (f.startsWith('Workflows/')) cls = 'file-workflow';
+            else if (f.startsWith('Tools/')) cls = 'file-tool';
+            filesHtml += `<span class="${cls}">${esc(f)}</span><br>`;
+          }
+          filesHtml += '</div></div>';
+          filesDiv.innerHTML = filesHtml;
+        }
+
+        // Strip frontmatter for cleaner rendering, but show it separately
+        let md = data.content;
+        let frontmatter = '';
+        const fmMatch = md.match(/^---\s*\n([\s\S]*?)\n---\s*\n/);
+        if (fmMatch) {
+          frontmatter = fmMatch[1];
+          md = md.slice(fmMatch[0].length);
+        }
+
+        let html = '';
+        if (frontmatter) {
+          const fmHtml = frontmatter
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/^(\w[\w\s]*?):/gm, '<span class="fm-key">$1</span>:')
+            .replace(/:\s*(.+)$/gm, ': <span class="fm-val">$1</span>');
+          html += '<div class="frontmatter">' + fmHtml + '</div>';
+        }
+
+        html += marked.parse(md);
+        content.innerHTML = html;
+      } catch (e) {
+        content.innerHTML = '<p style="color:var(--orange)">Could not load skill details.</p>';
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    function esc(s) {
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    document.getElementById('search').addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase();
+      const filtered = allSkills.filter(s =>
+        s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)
+      );
+      renderSkills(filtered);
+    });
+
+    loadSkills();
+  </script>
+  <script src="/shared/common.js"></script>
+</body>
+</html>

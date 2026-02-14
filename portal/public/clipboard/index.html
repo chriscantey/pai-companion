@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clipboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0d1220;
+      --bg-secondary: #141c2c;
+      --bg-tertiary: #1c2638;
+      --text-primary: #f0f2f5;
+      --text-secondary: #c0c8d4;
+      --text-muted: #8a919d;
+      --cyan: #12c2e9;
+      --teal: #2dd4bf;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.7;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2rem;
+      font-size: 0.85rem;
+    }
+    nav a { color: var(--text-muted); text-decoration: none; }
+    nav a:hover { color: var(--cyan); }
+    nav span { color: var(--text-muted); }
+    nav .sep { color: var(--text-muted); }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      flex: 1;
+      width: 100%;
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--cyan);
+      margin-bottom: 0.5rem;
+    }
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+    #clipboard-content {
+      width: 100%;
+      min-height: 300px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      line-height: 1.7;
+      resize: vertical;
+      outline: none;
+    }
+    #clipboard-content:focus {
+      border-color: rgba(18, 194, 233, 0.3);
+    }
+    .actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 0.6rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: var(--cyan);
+      color: var(--bg-primary);
+    }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+    .status {
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: var(--teal);
+      min-height: 1.5em;
+    }
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav id="pai-nav" data-page="Clipboard">
+      <a href="/">Portal</a>
+      <span>/</span>
+      <span>Clipboard</span>
+    </nav>
+    <h1>Clipboard</h1>
+    <p class="subtitle">Your assistant puts copyable text here. Click the button to copy it.</p>
+
+    <textarea id="clipboard-content" readonly>Your assistant hasn't placed anything here yet. Ask it to write something to the clipboard.</textarea>
+
+    <div class="actions">
+      <button class="btn-primary" onclick="copyToClipboard()">Copy to Clipboard</button>
+      <button class="btn-secondary" onclick="selectAll()">Select All</button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <footer id="pai-footer">PAI Companion Portal</footer>
+
+  <script src="/shared/common.js"></script>
+  <script>
+    async function copyToClipboard() {
+      const textarea = document.getElementById('clipboard-content');
+      const status = document.getElementById('status');
+      try {
+        await navigator.clipboard.writeText(textarea.value);
+        status.textContent = 'Copied!';
+        status.style.color = 'var(--teal)';
+      } catch (err) {
+        // Fallback for non-HTTPS
+        textarea.select();
+        document.execCommand('copy');
+        status.textContent = 'Copied! (fallback method)';
+        status.style.color = 'var(--teal)';
+      }
+      setTimeout(() => { status.textContent = ''; }, 3000);
+    }
+
+    function selectAll() {
+      const textarea = document.getElementById('clipboard-content');
+      textarea.select();
+    }
+  </script>
+</body>
+</html>

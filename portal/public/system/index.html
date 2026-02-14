@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Overview</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0d1220;
+      --bg-secondary: #141c2c;
+      --bg-tertiary: #1c2638;
+      --text-primary: #f0f2f5;
+      --text-secondary: #c0c8d4;
+      --text-muted: #8a919d;
+      --cyan: #12c2e9;
+      --purple: #c471ed;
+      --pink: #ff6b9d;
+      --teal: #2dd4bf;
+      --orange: #F39C12;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+    .container { max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem; }
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2rem;
+      font-size: 0.85rem;
+    }
+    nav a { color: var(--text-muted); text-decoration: none; }
+    nav a:hover { color: var(--cyan); }
+    nav span { color: var(--text-muted); }
+    header { margin-bottom: 2rem; }
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--cyan);
+      margin-bottom: 0.5rem;
+    }
+    header p { color: var(--text-muted); font-size: 0.95rem; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      text-align: center;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.2s;
+    }
+    a.stat:hover {
+      background: var(--bg-tertiary);
+      border-color: rgba(18, 194, 233, 0.3);
+    }
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 0.25rem;
+    }
+    h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+    }
+    .info-list {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+    .info-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      text-decoration: none;
+      color: inherit;
+      transition: background 0.15s;
+    }
+    a.info-row:hover { background: var(--bg-tertiary); }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: var(--text-secondary); font-size: 0.9rem; min-width: 120px; flex-shrink: 0; }
+    .info-value { color: var(--text-primary); font-weight: 500; font-size: 0.9rem; }
+    .info-hint { color: var(--text-muted); font-size: 0.75rem; }
+    .dir-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.15s;
+      user-select: none;
+    }
+    .dir-row:hover { background: var(--bg-tertiary); }
+    .dir-label {
+      color: var(--cyan);
+      font-size: 0.85rem;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      min-width: 120px;
+      flex-shrink: 0;
+      padding-top: 1px;
+    }
+    .dir-info { flex: 1; }
+    .dir-chevron {
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      transition: transform 0.2s;
+      padding-top: 4px;
+      flex-shrink: 0;
+    }
+    .dir-chevron.open { transform: rotate(90deg); }
+    .dir-listing {
+      display: none;
+      padding: 0.25rem 1.25rem 0.75rem 1.25rem;
+      padding-left: calc(1.25rem + 120px + 1rem);
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,0.15);
+    }
+    .dir-listing.open { display: block; }
+    .dir-file {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.3rem 0;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    .dir-file:last-child { border-bottom: none; }
+    .dir-file-icon { margin-right: 0.4rem; }
+    .dir-file-size { color: var(--text-muted); flex-shrink: 0; margin-left: 1rem; }
+    .dir-empty { padding: 0.5rem 0; color: var(--text-muted); font-size: 0.8rem; font-style: italic; }
+    .callout {
+      background: var(--bg-secondary);
+      border-left: 3px solid var(--cyan);
+      padding: 1rem 1.25rem;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 2rem;
+    }
+    .callout p { color: var(--text-secondary); font-size: 0.9rem; }
+    .callout strong { color: var(--text-primary); }
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      border-top: 1px solid var(--border);
+      margin-top: 2rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav id="pai-nav" data-page="System">
+      <a href="/">Portal</a>
+      <span>/</span>
+      <span>System</span>
+    </nav>
+
+    <header>
+      <h1>System Overview</h1>
+      <p>A snapshot of your PAI installation.</p>
+    </header>
+
+    <div class="stats" id="stats">
+      <a href="/skills/" class="stat">
+        <div class="stat-value" id="skill-count">...</div>
+        <div class="stat-label">Skills</div>
+      </a>
+      <a href="/agents/" class="stat">
+        <div class="stat-value" id="agent-count">...</div>
+        <div class="stat-label">Agents</div>
+      </a>
+      <div class="stat">
+        <div class="stat-value" id="alg-version">...</div>
+        <div class="stat-label">Algorithm</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">PAI</div>
+        <div class="stat-label">Framework</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>PAI</strong> (Personal AI Infrastructure) is an open-source framework by Daniel Miessler that enhances Claude Code with skills, hooks, and a structured problem-solving algorithm. Each skill is a specialized capability your assistant can use. Agents are specialized workers it can delegate tasks to.</p>
+    </div>
+
+    <h2>How It Works</h2>
+    <div class="info-list">
+      <div class="info-row">
+        <span class="info-label">Problem Solving</span>
+        <span class="info-value">7-Phase Algorithm (Observe, Think, Plan, Build, Execute, Verify, Learn)</span>
+      </div>
+      <a href="/skills/" class="info-row">
+        <span class="info-label">Skills</span>
+        <span class="info-value">Activated automatically when you ask about their topic</span>
+      </a>
+      <a href="/agents/" class="info-row">
+        <span class="info-label">Agents</span>
+        <span class="info-value">Specialized workers for parallel and delegated tasks</span>
+      </a>
+      <a href="/" class="info-row">
+        <span class="info-label">Portal</span>
+        <span class="info-value">Visual output from your assistant appears here</span>
+      </a>
+      <a href="/exchange/" class="info-row">
+        <span class="info-label">Exchange</span>
+        <span class="info-value">Share files between your browser and your assistant</span>
+      </a>
+      <a href="/clipboard/" class="info-row">
+        <span class="info-label">Clipboard</span>
+        <span class="info-value">One-click copy for text your assistant creates</span>
+      </a>
+    </div>
+
+    <h2>Scheduled Tasks</h2>
+    <div class="info-list" id="cron-list">
+      <div class="info-row"><span class="info-label" style="flex:1">Loading...</span></div>
+    </div>
+
+    <h2>Key Directories</h2>
+    <div class="info-list" id="dir-list">
+      <div class="dir-entry" data-dir="portal">
+        <div class="dir-row">
+          <span class="dir-label">~/portal/</span>
+          <div class="dir-info">
+            <span class="info-value">Web pages your assistant creates</span><br>
+            <span class="info-hint">Reports, dashboards, and styled HTML output</span>
+          </div>
+          <span class="dir-chevron">&#9654;</span>
+        </div>
+        <div class="dir-listing"></div>
+      </div>
+      <div class="dir-entry" data-dir="exchange">
+        <div class="dir-row">
+          <span class="dir-label">~/exchange/</span>
+          <div class="dir-info">
+            <span class="info-value">Two-way file sharing with your assistant</span><br>
+            <span class="info-hint">Upload and download files here</span>
+          </div>
+          <span class="dir-chevron">&#9654;</span>
+        </div>
+        <div class="dir-listing"></div>
+      </div>
+      <div class="dir-entry" data-dir="work">
+        <div class="dir-row">
+          <span class="dir-label">~/work/</span>
+          <div class="dir-info">
+            <span class="info-value">Active projects and code</span><br>
+            <span class="info-hint">Where your assistant builds things for you</span>
+          </div>
+          <span class="dir-chevron">&#9654;</span>
+        </div>
+        <div class="dir-listing"></div>
+      </div>
+      <div class="dir-entry" data-dir="data">
+        <div class="dir-row">
+          <span class="dir-label">~/data/</span>
+          <div class="dir-info">
+            <span class="info-value">Persistent data and configuration</span><br>
+            <span class="info-hint">Cron exports, settings, long-term storage</span>
+          </div>
+          <span class="dir-chevron">&#9654;</span>
+        </div>
+        <div class="dir-listing"></div>
+      </div>
+      <div class="dir-entry" data-dir="claude">
+        <div class="dir-row">
+          <span class="dir-label">~/.claude/</span>
+          <div class="dir-info">
+            <span class="info-value">PAI system files</span><br>
+            <span class="info-hint">Skills, hooks, agents, and configuration</span>
+          </div>
+          <span class="dir-chevron">&#9654;</span>
+        </div>
+        <div class="dir-listing"></div>
+      </div>
+    </div>
+
+    <footer id="pai-footer">
+      PAI Companion Portal
+    </footer>
+  </div>
+
+  <script>
+    async function loadSystem() {
+      try {
+        const res = await fetch('/api/system');
+        const info = await res.json();
+        document.getElementById('skill-count').textContent = info.skillCount || '?';
+        document.getElementById('agent-count').textContent = info.agentCount || '?';
+        document.getElementById('alg-version').textContent = info.algorithmVersion || '?';
+      } catch (e) {
+        document.getElementById('skill-count').textContent = '?';
+        document.getElementById('agent-count').textContent = '?';
+        document.getElementById('alg-version').textContent = '?';
+      }
+    }
+    loadSystem();
+
+    async function loadCron() {
+      const el = document.getElementById('cron-list');
+      try {
+        const res = await fetch('/api/cron');
+        const data = await res.json();
+        if (!data.jobs || data.jobs.length === 0) {
+          el.innerHTML = '<div class="info-row"><span class="info-label" style="flex:1;font-style:italic;color:var(--text-muted)">No scheduled tasks configured</span></div>';
+          return;
+        }
+        el.innerHTML = data.jobs.map(job =>
+          '<div class="info-row"><span class="info-label">' + job.when + '</span><span class="info-value">' + job.label + '</span></div>'
+        ).join('');
+      } catch (e) {
+        el.innerHTML = '<div class="info-row"><span class="info-label" style="flex:1;color:var(--text-muted)">Could not load scheduled tasks</span></div>';
+      }
+    }
+    loadCron();
+
+    function formatSize(bytes) {
+      if (!bytes) return '';
+      const units = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(1024));
+      return (bytes / Math.pow(1024, i)).toFixed(i > 0 ? 1 : 0) + ' ' + units[i];
+    }
+
+    document.querySelectorAll('.dir-entry').forEach(entry => {
+      const row = entry.querySelector('.dir-row');
+      const listing = entry.querySelector('.dir-listing');
+      const chevron = entry.querySelector('.dir-chevron');
+      const dir = entry.dataset.dir;
+      let loaded = false;
+
+      row.addEventListener('click', async () => {
+        if (listing.classList.contains('open')) {
+          listing.classList.remove('open');
+          chevron.classList.remove('open');
+          return;
+        }
+
+        chevron.classList.add('open');
+        listing.classList.add('open');
+
+        if (!loaded) {
+          listing.innerHTML = '<div class="dir-empty">Loading...</div>';
+          try {
+            const res = await fetch('/api/browse?dir=' + dir);
+            const items = await res.json();
+            if (Array.isArray(items) && items.length === 0) {
+              listing.innerHTML = '<div class="dir-empty">Empty directory</div>';
+            } else if (Array.isArray(items)) {
+              listing.innerHTML = items.map(item => {
+                const icon = item.type === 'dir' ? '&#128193;' : '&#128196;';
+                const size = item.type === 'file' ? formatSize(item.size) : '';
+                return '<div class="dir-file"><span><span class="dir-file-icon">' + icon + '</span>' + item.name + (item.type === 'dir' ? '/' : '') + '</span><span class="dir-file-size">' + size + '</span></div>';
+              }).join('');
+            } else {
+              listing.innerHTML = '<div class="dir-empty">Could not load directory</div>';
+            }
+            loaded = true;
+          } catch (e) {
+            listing.innerHTML = '<div class="dir-empty">Could not load directory</div>';
+          }
+        }
+      });
+    });
+  </script>
+  <script src="/shared/common.js"></script>
+</body>
+</html>

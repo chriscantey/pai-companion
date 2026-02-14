@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0d1220;
+      --bg-secondary: #141c2c;
+      --bg-tertiary: #1c2638;
+      --text-primary: #f0f2f5;
+      --text-secondary: #c0c8d4;
+      --text-muted: #8a919d;
+      --cyan: #12c2e9;
+      --purple: #c471ed;
+      --pink: #ff6b9d;
+      --teal: #2dd4bf;
+      --orange: #F39C12;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    header {
+      text-align: left;
+      padding: 3rem 0 2rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2rem;
+    }
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--cyan);
+      margin-bottom: 0.5rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    header h1 svg {
+      width: 1.6em;
+      height: 1.6em;
+      flex-shrink: 0;
+    }
+    header p { color: var(--text-muted); font-size: 0.95rem; }
+    .quick-links {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-start;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .quick-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 1.2rem;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .quick-link:hover {
+      background: var(--bg-tertiary);
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+    .quick-link .icon { font-size: 1.1rem; line-height: 1; }
+    .quick-link-sep {
+      width: 1px;
+      align-self: stretch;
+      background: var(--border);
+    }
+    h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.2s;
+      display: block;
+    }
+    .card:hover {
+      background: var(--bg-tertiary);
+      border-color: rgba(18, 194, 233, 0.3);
+      transform: translateY(-1px);
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--cyan);
+      margin-bottom: 0.25rem;
+    }
+    .card-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .empty {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-muted);
+    }
+    .empty p { margin-bottom: 0.5rem; }
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      border-top: 1px solid var(--border);
+      margin-top: 2rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+    #loading { text-align: center; padding: 2rem; color: var(--text-muted); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#12c2e9"/><stop offset="50%" stop-color="#c471ed"/><stop offset="100%" stop-color="#ff6b9d"/></linearGradient><clipPath id="clip"><rect width="512" height="512" rx="96"/></clipPath></defs><g clip-path="url(#clip)"><rect width="512" height="512" fill="#0d1220"/><circle cx="256" cy="256" r="170" fill="none" stroke="url(#g)" stroke-width="8" opacity="0.3"/><circle cx="256" cy="256" r="130" fill="none" stroke="url(#g)" stroke-width="10" opacity="0.5"/><circle cx="256" cy="256" r="90" fill="none" stroke="url(#g)" stroke-width="14" opacity="0.7"/><circle cx="256" cy="256" r="45" fill="url(#g)"/></g></svg> Portal</h1>
+      <p>Your AI assistant's web content hub</p>
+      <div class="quick-links">
+        <a href="/welcome/" class="quick-link">
+          <span class="icon">&#127775;</span> Welcome
+        </a>
+        <span class="quick-link-sep"></span>
+        <a href="/clipboard/" class="quick-link">
+          <span class="icon">&#128203;</span> Clipboard
+        </a>
+        <a href="/exchange/" class="quick-link">
+          <span class="icon">&#128193;</span> Exchange
+        </a>
+        <span class="quick-link-sep"></span>
+        <a href="/skills/" class="quick-link">
+          <span class="icon">&#9889;</span> Skills
+        </a>
+        <a href="/agents/" class="quick-link">
+          <span class="icon">&#129302;</span> Agents
+        </a>
+        <a href="/system/" class="quick-link">
+          <span class="icon">&#9881;&#65039;</span> System
+        </a>
+      </div>
+    </header>
+
+    <h2>Pages</h2>
+    <div id="listing">
+      <div id="loading">Loading...</div>
+    </div>
+
+    <footer id="pai-footer">
+      PAI Companion Portal
+    </footer>
+  </div>
+  <script src="/shared/common.js"></script>
+
+  <script>
+    async function loadListing() {
+      const container = document.getElementById('listing');
+      try {
+        const res = await fetch('/api/list');
+        const items = await res.json();
+
+        // Filter out system directories
+        const skip = new Set(['clipboard', 'exchange', 'welcome', 'skills', 'agents', 'system', 'shared', '.thumbs']);
+        const filtered = items.filter(i => !skip.has(i.name));
+
+        if (filtered.length === 0) {
+          container.innerHTML = `
+            <div class="empty">
+              <p>No portal pages yet.</p>
+              <p>Ask your assistant to create something and it will appear here.</p>
+            </div>`;
+          return;
+        }
+
+        const grid = document.createElement('div');
+        grid.className = 'grid';
+        for (const item of filtered) {
+          const a = document.createElement('a');
+          a.href = '/' + item.name + '/';
+          a.className = 'card';
+          const date = new Date(item.modified);
+          const ago = timeAgo(date);
+          a.innerHTML = `
+            <div class="card-title">${item.name}</div>
+            <div class="card-meta">${ago}</div>`;
+          grid.appendChild(a);
+        }
+        container.innerHTML = '';
+        container.appendChild(grid);
+      } catch (e) {
+        container.innerHTML = '<div class="empty"><p>Could not load portal pages.</p></div>';
+      }
+    }
+
+    function timeAgo(date) {
+      const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+      if (seconds < 60) return 'just now';
+      if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+      if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+      if (seconds < 604800) return Math.floor(seconds / 86400) + 'd ago';
+      return date.toLocaleDateString();
+    }
+
+    loadListing();
+  </script>
+</body>
+</html>

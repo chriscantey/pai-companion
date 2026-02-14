@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to PAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0d1220;
+      --bg-secondary: #141c2c;
+      --bg-tertiary: #1c2638;
+      --text-primary: #f0f2f5;
+      --text-secondary: #c0c8d4;
+      --text-muted: #8a919d;
+      --cyan: #12c2e9;
+      --purple: #c471ed;
+      --pink: #ff6b9d;
+      --teal: #2dd4bf;
+      --orange: #F39C12;
+      --blue: #6BB6FF;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2rem;
+      font-size: 0.85rem;
+    }
+    nav a { color: var(--text-muted); text-decoration: none; }
+    nav a:hover { color: var(--cyan); }
+    nav span { color: var(--text-muted); }
+    nav .sep { color: var(--text-muted); }
+    .container { max-width: 800px; margin: 0 auto; padding: 2rem 1.5rem; }
+    header {
+      text-align: center;
+      padding: 2rem 0;
+      margin-bottom: 2rem;
+    }
+    header h1 { font-size: 2rem; font-weight: 700; color: var(--cyan); margin-bottom: 0.5rem; }
+    header p { color: var(--text-secondary); font-size: 1rem; }
+    .section { margin-bottom: 2.5rem; }
+    .section h2 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--purple);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .section p { color: var(--text-secondary); margin-bottom: 1rem; }
+    .prompt-list { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; }
+    .prompt-item {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+    }
+    .prompt-category {
+      font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em; color: var(--teal); margin-bottom: 0.25rem;
+    }
+    .prompt-text { color: var(--text-primary); font-size: 0.95rem; }
+    .prompt-text code {
+      background: var(--bg-tertiary);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: var(--pink);
+    }
+    .callout {
+      background: var(--bg-secondary);
+      border-left: 3px solid var(--cyan);
+      padding: 1rem;
+      border-radius: 0 6px 6px 0;
+      margin-bottom: 1rem;
+    }
+    .callout.warning { border-left-color: var(--orange); }
+    .callout p { margin-bottom: 0; color: var(--text-secondary); }
+    .callout strong { color: var(--text-primary); }
+    .url-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+    .url-card .label {
+      font-size: 0.8rem; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .url-card .url { font-size: 1rem; color: var(--cyan); word-break: break-all; }
+    .url-card a { color: var(--cyan); text-decoration: none; }
+    .url-card a:hover { text-decoration: underline; }
+
+    /* Learn cards */
+    .learn-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .learn-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.2s;
+      display: block;
+    }
+    .learn-card:hover {
+      background: var(--bg-tertiary);
+      border-color: rgba(18, 194, 233, 0.3);
+      transform: translateY(-1px);
+    }
+    .learn-card .lc-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .learn-card .lc-title { font-size: 1rem; font-weight: 600; color: var(--cyan); margin-bottom: 0.25rem; }
+    .learn-card .lc-desc { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4; }
+
+    /* Concept cards */
+    .concept {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .concept-title {
+      font-size: 1rem; font-weight: 600; color: var(--cyan); margin-bottom: 0.5rem;
+    }
+    .concept-body { font-size: 0.9rem; color: var(--text-secondary); }
+    .concept-body code {
+      background: var(--bg-tertiary);
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      font-size: 0.85em;
+      color: var(--pink);
+    }
+    .phase-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+    .phase-tag {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      border-top: 1px solid var(--border);
+      margin-top: 2rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+    footer a { color: var(--text-muted); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav id="pai-nav" data-page="Welcome">
+      <a href="/">Portal</a>
+      <span>/</span>
+      <span>Welcome</span>
+    </nav>
+    <header>
+      <h1>Welcome to PAI</h1>
+      <p>Your Personal AI Infrastructure is ready. Here's how to get started and learn the system.</p>
+    </header>
+
+    <div class="section">
+      <h2>Your Portal</h2>
+      <p>Your assistant creates visual content here. Bookmark these URLs on your host machine.</p>
+
+      <div class="url-card">
+        <div class="label">Portal (web content)</div>
+        <div class="url" id="portal-url">Loading...</div>
+      </div>
+      <div class="url-card">
+        <div class="label">File Exchange (drag and drop files)</div>
+        <div class="url" id="exchange-url">Loading...</div>
+      </div>
+      <div class="url-card">
+        <div class="label">Clipboard (copyable text)</div>
+        <div class="url" id="clipboard-url">Loading...</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Things to Try</h2>
+      <p>Open Claude Code in the terminal and try these prompts. Your assistant will create something and give you a URL to view the result.</p>
+
+      <ul class="prompt-list">
+        <li class="prompt-item">
+          <div class="prompt-category">Get oriented</div>
+          <div class="prompt-text">"What can you do? Show me your capabilities."</div>
+        </li>
+        <li class="prompt-item">
+          <div class="prompt-category">Research</div>
+          <div class="prompt-text">"Research the best password managers in 2026 and make me a comparison page."</div>
+        </li>
+        <li class="prompt-item">
+          <div class="prompt-category">Writing help</div>
+          <div class="prompt-text">"Help me write a professional email declining a meeting. Put it on the clipboard."</div>
+        </li>
+        <li class="prompt-item">
+          <div class="prompt-category">File processing</div>
+          <div class="prompt-text">"I dropped some files in the exchange. Summarize everything in them."</div>
+        </li>
+        <li class="prompt-item">
+          <div class="prompt-category">Build something</div>
+          <div class="prompt-text">"Build me a countdown timer page for my next vacation on March 15."</div>
+        </li>
+        <li class="prompt-item">
+          <div class="prompt-category">Learn the system</div>
+          <div class="prompt-text">"Explain how your skills system works. How would I add a new skill?"</div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>Explore PAI</h2>
+      <p>Click through these pages to understand what your assistant is made of. Every skill and agent definition is readable — PAI is open by design.</p>
+
+      <div class="learn-grid">
+        <a href="/skills/" class="learn-card">
+          <div class="lc-icon">&#9889;</div>
+          <div class="lc-title">Skills Catalog</div>
+          <div class="lc-desc">Browse all skills. Click any skill to read its full definition and see how it's structured.</div>
+        </a>
+        <a href="/agents/" class="learn-card">
+          <div class="lc-icon">&#129302;</div>
+          <div class="lc-title">Agent Roster</div>
+          <div class="lc-desc">Meet the specialized agents. Each has a unique personality, expertise, and backstory.</div>
+        </a>
+        <a href="/system/" class="learn-card">
+          <div class="lc-icon">&#9881;</div>
+          <div class="lc-title">System Overview</div>
+          <div class="lc-desc">See your installation at a glance: skill count, agents, Algorithm version, and directory layout.</div>
+        </a>
+      </div>
+
+      <div class="callout">
+        <p><strong>Want to create your own skill?</strong> Open the <a href="/skills/" style="color:var(--cyan)">Skills Catalog</a> and click on <strong>CreateSkill</strong>. That's the skill that teaches your assistant how to build new skills. You can ask your assistant: "Create a skill for [whatever you want]" and it will follow that blueprint.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>How PAI Works</h2>
+      <p>PAI is built on a few core concepts. Understanding these will help you get more out of your assistant.</p>
+
+      <div class="concept">
+        <div class="concept-title">The Algorithm</div>
+        <div class="concept-body">
+          Every non-trivial request goes through a 7-phase problem-solving process. Your assistant observes what you need, thinks about the best approach, plans the work, builds it, executes it, verifies it worked, and learns from the result. This is why it's systematic rather than just winging it.
+          <div class="phase-list">
+            <span class="phase-tag">1. Observe</span>
+            <span class="phase-tag">2. Think</span>
+            <span class="phase-tag">3. Plan</span>
+            <span class="phase-tag">4. Build</span>
+            <span class="phase-tag">5. Execute</span>
+            <span class="phase-tag">6. Verify</span>
+            <span class="phase-tag">7. Learn</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="concept">
+        <div class="concept-title">Skills</div>
+        <div class="concept-body">
+          Skills are modular capabilities. Each skill lives in its own folder with a <code>SKILL.md</code> file that defines what it does and when it activates. Skills can have workflows (multi-step procedures) and tools (scripts). Your assistant loads the right skills automatically based on what you ask. <a href="/skills/" style="color:var(--cyan)">Browse them all.</a>
+        </div>
+      </div>
+
+      <div class="concept">
+        <div class="concept-title">Agents</div>
+        <div class="concept-body">
+          When a task is complex, your assistant can delegate work to specialized agents. An Engineer agent builds code. An Architect designs systems. A Researcher investigates questions. Multiple agents can work in parallel. <a href="/agents/" style="color:var(--cyan)">See the full roster.</a>
+        </div>
+      </div>
+
+      <div class="concept">
+        <div class="concept-title">Hooks</div>
+        <div class="concept-body">
+          Hooks are automation triggers that run at specific moments — when a session starts, before a tool is used, after a response is generated. They handle things like formatting, capability detection, and status tracking without you having to think about them.
+        </div>
+      </div>
+
+      <div class="concept">
+        <div class="concept-title">Ideal State Criteria</div>
+        <div class="concept-body">
+          The core innovation of the Algorithm. For every task, your assistant creates a set of testable criteria that define what "done" looks like. These start as observations about what you want, evolve during planning, and become the actual verification checklist. If all criteria pass, the task is complete. This is what makes it reliably good rather than occasionally good.
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>How It Works Day-to-Day</h2>
+      <div class="callout">
+        <p><strong>Portal pages:</strong> When your assistant creates something visual (a report, dashboard, or styled page), it writes it to <code>~/portal/</code> and gives you a URL. Open it in your browser.</p>
+      </div>
+      <div class="callout">
+        <p><strong>File exchange:</strong> Need to give your assistant a file? Drag it into the <a href="/exchange/" style="color:var(--cyan)">Exchange</a> page. Need a file from your assistant? It will put it in the exchange and tell you.</p>
+      </div>
+      <div class="callout">
+        <p><strong>Clipboard:</strong> When your assistant writes text you need to copy (an email, a message, a code snippet), it puts it on the <a href="/clipboard/" style="color:var(--cyan)">Clipboard</a> page with a one-click copy button.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Tips</h2>
+      <div class="callout warning">
+        <p><strong>Be specific.</strong> "Make me a budget spreadsheet with columns for date, description, amount, and category" works better than "help with my budget."</p>
+      </div>
+      <div class="callout warning">
+        <p><strong>Iterate.</strong> Your assistant learns from the conversation. If something isn't right, tell it what to change. It keeps the full context.</p>
+      </div>
+      <div class="callout warning">
+        <p><strong>Data stays local.</strong> Everything on this VM is only accessible from your local network. Nothing is shared publicly unless you specifically ask.</p>
+      </div>
+      <div class="callout warning">
+        <p><strong>Explore the source.</strong> Every skill, agent, and hook is a readable text file. Ask your assistant to show you any of them. Understanding the system helps you use it better.</p>
+      </div>
+    </div>
+
+    <footer id="pai-footer">
+      PAI Companion Portal
+    </footer>
+  </div>
+
+  <script src="/shared/common.js"></script>
+  <script>
+    const base = window.location.origin;
+    document.getElementById('portal-url').innerHTML = `<a href="${base}/">${base}/</a>`;
+    document.getElementById('exchange-url').innerHTML = `<a href="${base}/exchange/">${base}/exchange/</a>`;
+    document.getElementById('clipboard-url').innerHTML = `<a href="${base}/clipboard/">${base}/clipboard/</a>`;
+  </script>
+</body>
+</html>

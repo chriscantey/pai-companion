@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File Exchange</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0d1220;
+      --bg-secondary: #141c2c;
+      --bg-tertiary: #1c2638;
+      --text-primary: #f0f2f5;
+      --text-secondary: #c0c8d4;
+      --text-muted: #8a919d;
+      --cyan: #12c2e9;
+      --purple: #c471ed;
+      --pink: #ff6b9d;
+      --teal: #2dd4bf;
+      --orange: #F39C12;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2rem;
+      font-size: 0.85rem;
+    }
+    nav a { color: var(--text-muted); text-decoration: none; }
+    nav a:hover { color: var(--cyan); }
+    nav span { color: var(--text-muted); }
+    nav .sep { color: var(--text-muted); }
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--cyan);
+      margin-bottom: 0.5rem;
+    }
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+    .dropzone {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 3rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 2rem;
+      background: var(--bg-secondary);
+    }
+    .dropzone.dragover {
+      border-color: var(--cyan);
+      background: rgba(18, 194, 233, 0.05);
+    }
+    .dropzone-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+    .dropzone-text { color: var(--text-secondary); font-size: 0.95rem; }
+    .dropzone-hint { color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem; }
+    .progress-container {
+      display: none;
+      margin-bottom: 1.5rem;
+    }
+    .progress-bar {
+      height: 6px;
+      background: var(--bg-tertiary);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      border-radius: 3px;
+      width: 0%;
+      transition: width 0.3s;
+    }
+    .progress-stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.35rem;
+    }
+    .progress-text {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+    h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+    }
+    .file-list { list-style: none; }
+    .file-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      transition: all 0.2s;
+    }
+    .file-item:hover { border-color: rgba(18, 194, 233, 0.2); }
+    .file-info { display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 0; }
+    .file-icon { font-size: 1.2rem; flex-shrink: 0; }
+    .file-name {
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .file-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      margin: 0 1rem;
+    }
+    .file-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+    .file-actions a, .file-actions button {
+      padding: 0.3rem 0.7rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s;
+    }
+    .file-actions a:hover, .file-actions button:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+    .file-actions .delete:hover {
+      border-color: var(--pink);
+      color: var(--pink);
+    }
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    input[type="file"] { display: none; }
+    footer {
+      text-align: center;
+      padding: 2rem 1.5rem;
+      border-top: 1px solid var(--border);
+      margin-top: 2rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav id="pai-nav" data-page="Exchange">
+      <a href="/">Portal</a>
+      <span>/</span>
+      <span>Exchange</span>
+    </nav>
+    <h1>File Exchange</h1>
+    <p class="subtitle">Drag and drop files to share them with your AI assistant, or download files it has prepared for you.</p>
+
+    <div class="dropzone" id="dropzone">
+      <div class="dropzone-icon">&#128230;</div>
+      <div class="dropzone-text">Drop files here or click to browse</div>
+      <div class="dropzone-hint">Maximum file size: 1 GB</div>
+    </div>
+    <input type="file" id="file-input" multiple>
+
+    <div class="progress-container" id="progress-container">
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="progress-text" id="progress-text">Uploading...</div>
+    </div>
+
+    <h2>Files</h2>
+    <ul class="file-list" id="file-list">
+      <li class="empty-state">Loading...</li>
+    </ul>
+  </div>
+
+  <footer id="pai-footer">PAI Companion Portal</footer>
+
+  <script src="/shared/common.js"></script>
+  <script>
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('file-input');
+    const fileList = document.getElementById('file-list');
+    const progressContainer = document.getElementById('progress-container');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+
+    // Drag and drop
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('dragover');
+    });
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      handleFiles(e.dataTransfer.files);
+    });
+    fileInput.addEventListener('change', () => {
+      handleFiles(fileInput.files);
+      fileInput.value = '';
+    });
+
+    function handleFiles(files) {
+      if (!files.length) return;
+      const fileArray = Array.from(files);
+      const totalSize = fileArray.reduce((s, f) => s + f.size, 0);
+      const label = fileArray.length + ' file' + (fileArray.length > 1 ? 's' : '') + ' (' + formatSize(totalSize) + ')';
+
+      progressContainer.style.display = 'block';
+      progressFill.style.width = '0%';
+      progressText.textContent = 'Uploading ' + label + '...';
+
+      const startTime = Date.now();
+      let completedSize = 0;
+      const uploadedNames = [];
+
+      function uploadNext(index) {
+        if (index >= fileArray.length) {
+          progressText.textContent = uploadedNames.length + ' file(s) uploaded';
+          progressText.style.color = 'var(--teal)';
+          setTimeout(() => {
+            progressContainer.style.display = 'none';
+            progressText.style.color = '';
+          }, 3000);
+          loadFiles();
+          return;
+        }
+
+        const file = fileArray[index];
+        const params = new URLSearchParams();
+        params.set('filename', file.name);
+        const uploadUrl = '/api/exchange/upload?' + params.toString();
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.addEventListener('progress', (e) => {
+          if (!e.lengthComputable) return;
+          const totalLoaded = completedSize + e.loaded;
+          const pct = Math.round((totalLoaded / totalSize) * 100);
+          const elapsed = (Date.now() - startTime) / 1000;
+          const speed = elapsed > 0 ? totalLoaded / elapsed : 0;
+          progressFill.style.width = pct + '%';
+          progressText.textContent = pct + '% — ' + formatSize(speed) + '/s — ' + formatETA((totalSize - totalLoaded) / speed);
+        });
+
+        xhr.addEventListener('load', () => {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (data.ok) {
+              uploadedNames.push(...data.files);
+              completedSize += file.size;
+              uploadNext(index + 1);
+            } else {
+              progressText.textContent = 'Error: ' + (data.error || 'Failed');
+              progressText.style.color = 'var(--pink)';
+            }
+          } catch (e) {
+            progressText.textContent = 'Upload failed';
+            progressText.style.color = 'var(--pink)';
+          }
+        });
+
+        xhr.addEventListener('error', () => {
+          progressText.textContent = 'Upload failed — network error';
+          progressText.style.color = 'var(--pink)';
+        });
+
+        xhr.open('POST', uploadUrl);
+        xhr.send(file);
+      }
+
+      uploadNext(0);
+    }
+
+    function formatETA(seconds) {
+      if (!isFinite(seconds) || seconds < 0) return '';
+      if (seconds < 60) return Math.ceil(seconds) + 's left';
+      if (seconds < 3600) return Math.ceil(seconds / 60) + 'm left';
+      return Math.floor(seconds / 3600) + 'h ' + Math.ceil((seconds % 3600) / 60) + 'm left';
+    }
+
+    async function loadFiles() {
+      try {
+        const res = await fetch('/api/exchange');
+        const items = await res.json();
+
+        if (items.length === 0) {
+          fileList.innerHTML = '<li class="empty-state">No files yet. Drop something above to get started.</li>';
+          return;
+        }
+
+        fileList.innerHTML = '';
+        for (const item of items) {
+          const li = document.createElement('li');
+          li.className = 'file-item';
+          const icon = item.type === 'dir' ? '&#128193;' : '&#128196;';
+          const size = item.type === 'file' ? formatSize(item.size) : '';
+          const ago = timeAgo(new Date(item.modified));
+
+          li.innerHTML = `
+            <div class="file-info">
+              <span class="file-icon">${icon}</span>
+              <span class="file-name">${item.name}</span>
+            </div>
+            <span class="file-meta">${size} ${ago}</span>
+            <div class="file-actions">
+              ${item.type === 'file' ? `<a href="/api/exchange/download/${encodeURIComponent(item.name)}">Download</a>` : ''}
+              ${item.type === 'file' ? `<button class="delete" data-name="${encodeURIComponent(item.name)}">Delete</button>` : ''}
+            </div>`;
+          fileList.appendChild(li);
+        }
+      } catch (e) {
+        fileList.innerHTML = '<li class="empty-state">Could not load files.</li>';
+      }
+    }
+
+    async function deleteFile(name) {
+      if (!confirm(`Delete ${name}?`)) return;
+      try {
+        await fetch('/api/exchange/delete', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: name }),
+        });
+        loadFiles();
+      } catch (e) {
+        alert('Failed to delete file');
+      }
+    }
+
+    function formatSize(bytes) {
+      if (bytes === 0) return '';
+      const units = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(1024));
+      return (bytes / Math.pow(1024, i)).toFixed(i > 0 ? 1 : 0) + ' ' + units[i];
+    }
+
+    function timeAgo(date) {
+      const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+      if (seconds < 60) return 'just now';
+      if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+      if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+      return Math.floor(seconds / 86400) + 'd ago';
+    }
+
+    // Event delegation for delete buttons (avoids inline onclick escaping issues)
+    fileList.addEventListener('click', (e) => {
+      const btn = e.target.closest('.delete');
+      if (btn) deleteFile(decodeURIComponent(btn.dataset.name));
+    });
+
+    loadFiles();
+  </script>
+</body>
+</html>

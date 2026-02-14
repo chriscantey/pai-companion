@@ -1,0 +1,24 @@
+services:
+  portal:
+    build: .
+    container_name: pai-portal
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ${HOME}/portal:/portal
+      - ${HOME}/exchange:/exchange
+      - ${HOME}/.claude/skills:/skills:ro
+      - ${HOME}/.claude/agents:/agents:ro
+      - ${HOME}/work:/work:ro
+      - ${HOME}/data:/data:ro
+      - ${HOME}/.claude:/dotclaude:ro
+    environment:
+      - PORT=8080
+      - VIEW_DIR=/portal
+      - EXCHANGE_DIR=/exchange
+      - SKILLS_DIR=/skills
+      - AGENTS_DIR=/agents
+      - WORK_DIR=/work
+      - DATA_DIR=/data
+      - CLAUDE_DIR=/dotclaude
