@@ -52,12 +52,12 @@ The upstream PAI statusline uses macOS-specific syntax (`stat -f %m` for file mt
    ```bash
    bash ~/pai-companion/patches/statusline-linux.sh
    ```
-2. Verify the patch applied:
+2. Verify by running it again (should report no fixes needed):
    ```bash
-   grep "CROSS-PLATFORM HELPERS" ~/.claude/statusline-command.sh
+   bash ~/pai-companion/patches/statusline-linux.sh
    ```
 
-**Verification:** The grep command above returns a match. The script is idempotent (safe to run multiple times).
+**Verification:** The second run reports "No fixes needed — statusline is already Linux-compatible." The script is idempotent and safe to run on any PAI version.
 
 ---
 
@@ -329,7 +329,7 @@ echo ""
 
 # Phase 0
 echo -n "Statusline patched: "
-grep -q "CROSS-PLATFORM HELPERS" ~/.claude/statusline-command.sh 2>/dev/null && echo "PASS" || echo "FAIL"
+bash ~/pai-companion/patches/statusline-linux.sh 2>&1 | grep -q "No fixes needed\|issue(s) fixed" && echo "PASS" || echo "FAIL"
 
 # Phase 1
 echo -n "VM IP configured: "
