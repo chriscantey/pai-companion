@@ -23,7 +23,7 @@ source ~/.bashrc
 
 Follow Anthropic's official install instructions for Claude Code.
 
-## PAI v2.5
+## PAI v3.0
 
 Installed via the PAI install wizard. See [danielmiessler/PAI](https://github.com/danielmiessler/PAI).
 
@@ -85,7 +85,7 @@ docker run --rm hello-world
 # Playwright (optional)
 ls ~/.cache/ms-playwright/chromium-*/chrome-linux*/chrome 2>/dev/null && echo "Playwright: OK" || echo "Playwright: not installed (optional)"
 
-# PAI v2.5 installed
+# PAI v3.0 installed
 cat ~/.claude/skills/PAI/SKILL.md | head -5
 
 # Claude Code authenticated

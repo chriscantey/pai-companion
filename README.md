@@ -2,7 +2,7 @@
 
 > **Work in Progress.** This is an evolving onboarding package for PAI (Personal AI Infrastructure). It is not production-ready. Expect rough edges, missing pieces, and changes.
 
-A companion setup package that adds visual output and file sharing capabilities to a [PAI v2.5](https://github.com/danielmiessler/PAI) installation. PAI provides the core AI infrastructure (skills, hooks, the Algorithm). This package layers on a web portal, design system, and directory conventions so your assistant can deliver styled visual output and exchange files with you through a browser.
+A companion setup package that adds visual output and file sharing capabilities to a [PAI v3.0](https://github.com/danielmiessler/PAI) installation. PAI provides the core AI infrastructure (skills, hooks, the Algorithm). This package layers on a web portal, design system, and directory conventions so your assistant can deliver styled visual output and exchange files with you through a browser.
 
 Designed for users running PAI on a local Ubuntu VM.
 
@@ -30,7 +30,7 @@ If you were directed here by your user to set up their system, follow the phases
 - Ubuntu 24.04 Server VM (any hypervisor: UTM, VMware, VirtualBox, Proxmox, etc.)
 - Claude Code installed and authenticated
 - Bun runtime installed
-- PAI v2.5 installed via the install wizard
+- PAI v3.0 installed via the install wizard
 - Docker installed and working without sudo
 - Playwright Chromium installed (optional, for Browser skill)
 
@@ -40,7 +40,12 @@ If you were directed here by your user to set up their system, follow the phases
 
 ### Phase 0: Linux Adaptation
 
-The upstream PAI statusline uses macOS-specific syntax. This phase patches it for Linux.
+The upstream PAI statusline uses macOS-specific syntax (`stat -f %m` for file mtime). On Linux, this returns filesystem info instead of modification times, breaking all cache-driven sections (location, weather, quotes). The patch script detects what needs fixing and applies only the relevant fixes.
+
+**What it patches (auto-detected):**
+- `stat -f %m` calls replaced with cross-platform `get_mtime()` helper (all versions)
+- `tr ' ' '─'` replaced with `repeat_dash()` for multibyte-safe rendering (extended versions only)
+- macOS Keychain OAuth replaced with `~/.claude/.credentials.json` fallback (extended versions only)
 
 **Steps:**
 1. Run the statusline patch script:
@@ -49,10 +54,10 @@ The upstream PAI statusline uses macOS-specific syntax. This phase patches it fo
    ```
 2. Verify the patch applied:
    ```bash
-   grep "cross-platform" ~/.claude/statusline-command.sh
+   grep "CROSS-PLATFORM HELPERS" ~/.claude/statusline-command.sh
    ```
 
-**Verification:** The grep command above returns a match.
+**Verification:** The grep command above returns a match. The script is idempotent (safe to run multiple times).
 
 ---
 
@@ -324,7 +329,7 @@ echo ""
 
 # Phase 0
 echo -n "Statusline patched: "
-grep -q "cross-platform" ~/.claude/statusline-command.sh 2>/dev/null && echo "PASS" || echo "FAIL"
+grep -q "CROSS-PLATFORM HELPERS" ~/.claude/statusline-command.sh 2>/dev/null && echo "PASS" || echo "FAIL"
 
 # Phase 1
 echo -n "VM IP configured: "
@@ -431,7 +436,7 @@ echo "=== Verification Complete ==="
 | `context/identity-additions.md` | Text to append to USER/IDENTITY.md |
 | `context/steering-rules.md` | Text to append to USER/AISTEERINGRULES.md |
 | `context/design-system.md` | Dark theme CSS and document methodology |
-| `patches/statusline-linux.sh` | Statusline cross-platform compatibility fix |
+| `patches/statusline-linux.sh` | Statusline cross-platform patch (stat, tr, OAuth, .env) |
 | `scripts/setup-dirs.sh` | Directory structure creation |
 | `scripts/setup-cron.sh` | Maintenance cron job installation |
 | `welcome/index.html` | Getting-started guide with example prompts |
