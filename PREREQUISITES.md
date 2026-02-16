@@ -41,24 +41,70 @@ sudo usermod -aG docker $USER
 Verify Docker works without sudo:
 ```bash
 docker run --rm hello-world
+docker rmi hello-world
 ```
 
 ## Playwright Dependencies (Optional)
 
 Optional but recommended. Enables the Browser skill (web page screenshots and automation). You can always install this later if you skip it now.
 
-System libraries required by Chromium:
+### Method 1: Standard Install
+
 ```bash
-sudo apt install -y \
-  libnss3 libatk1.0-0t64 libatk-bridge2.0-0t64 \
-  libcups2t64 libdrm2 libxkbcommon0 libxcomposite1 \
-  libxdamage1 libxrandr2 libgbm1 libpango-1.0-0 \
-  libcairo2 libasound2t64 libxshmfence1
+# Install the playwright package in the Browser skill
+cd ~/.claude/skills/Browser && bun install
+
+# Install system libraries that Chromium needs
+# (sudo can't find bun since it's installed per-user, so we pass PATH through)
+sudo env "PATH=$PATH" bunx playwright install-deps chromium
+
+# Download Chromium browsers
+cd ~/.claude/skills/Browser && bun run node_modules/.bin/playwright install chromium
 ```
 
-Then install Chromium for Playwright (as normal user, no sudo):
+**Note:** The download shows "100%" after the first component, then downloads a second with no progress bar. Let it sit for up to 5 minutes. If it's still stuck after that, Ctrl+C and use Method 2.
+
+### Method 2: Manual Download (if Method 1 hangs)
+
+We've seen the automated installer hang on some systems, particularly ARM64 Linux VMs (e.g., UTM/Parallels on Mac). If Method 1 doesn't complete, this approach downloads the same files directly:
+
 ```bash
-bunx playwright install chromium
+# Install the playwright package (if not already done)
+cd ~/.claude/skills/Browser && bun install
+
+# Install system libraries (if not already done)
+sudo env "PATH=$PATH" bunx playwright install-deps chromium
+
+# Detect the playwright build version and architecture
+cd ~/.claude/skills/Browser
+PWVER=$(bun -e "console.log(require('playwright-core/browsers.json').browsers.find(b=>b.name==='chromium').revision)")
+ARCH=$(uname -m | sed 's/x86_64/linux/;s/aarch64/linux-arm64/')
+
+# Download both browser components
+curl -L -o /tmp/chromium.zip \
+  "https://cdn.playwright.dev/dbazure/download/playwright/builds/chromium/${PWVER}/chromium-${ARCH}.zip"
+curl -L -o /tmp/headless-shell.zip \
+  "https://cdn.playwright.dev/dbazure/download/playwright/builds/chromium/${PWVER}/chromium-headless-shell-${ARCH}.zip"
+
+# Extract to where Playwright expects them
+mkdir -p ~/.cache/ms-playwright/chromium-${PWVER}
+unzip /tmp/chromium.zip -d ~/.cache/ms-playwright/chromium-${PWVER}/
+mkdir -p ~/.cache/ms-playwright/chromium_headless_shell-${PWVER}
+unzip /tmp/headless-shell.zip -d ~/.cache/ms-playwright/chromium_headless_shell-${PWVER}/
+
+# Clean up
+rm /tmp/chromium.zip /tmp/headless-shell.zip
+```
+
+### Verify
+
+Whichever method you used, confirm Playwright can actually take a screenshot:
+
+```bash
+cd ~/.claude/skills/Browser && bun run node_modules/.bin/playwright screenshot \
+  --browser chromium https://example.com /tmp/playwright-test.png \
+  && echo "Playwright: fully working" \
+  || echo "Playwright: installed but not functional - check deps"
 ```
 
 ## Useful CLI Tools
@@ -80,10 +126,13 @@ Run these to confirm everything is installed correctly:
 which git curl bun claude
 
 # Docker (without sudo)
-docker run --rm hello-world
+docker run --rm hello-world && docker rmi hello-world
 
-# Playwright (optional)
-ls ~/.cache/ms-playwright/chromium-*/chrome-linux*/chrome 2>/dev/null && echo "Playwright: OK" || echo "Playwright: not installed (optional)"
+# Playwright (optional) - functional test, not just binary check
+cd ~/.claude/skills/Browser && bun run node_modules/.bin/playwright screenshot \
+  --browser chromium https://example.com /tmp/playwright-test.png 2>/dev/null \
+  && echo "Playwright: OK" \
+  || echo "Playwright: not installed or not functional (optional)"
 
 # PAI v3.0 installed
 cat ~/.claude/skills/PAI/SKILL.md | head -5
