@@ -17,14 +17,17 @@ If you prefer direct instructions, here's the short version:
 # Core tools
 sudo apt update && sudo apt install -y curl git zip unzip
 
+# Claude Code (https://docs.anthropic.com/en/docs/claude-code/overview)
+curl -fsSL https://claude.ai/install.sh | bash
+
 # Bun runtime
 curl -fsSL https://bun.sh/install | bash
 source ~/.bashrc
 
-# Claude Code - follow Anthropic's official install instructions
-
-# PAI v3.0 - install via the PAI wizard
-# See: https://github.com/danielmiessler/PAI
+# PAI v3.0 (https://github.com/danielmiessler/PAI/tree/main/Releases/v3.0)
+git clone https://github.com/danielmiessler/PAI.git
+cp -r PAI/Releases/v3.0/.claude ~/
+cd ~/.claude && bash install.sh
 ```
 
 ## Docker
