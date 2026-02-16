@@ -4,28 +4,28 @@ This documents what should be installed in the VM **before** running the compani
 
 The companion setup (`README.md`) assumes these are already present. If anything is missing, the setup will fail or degrade.
 
-## Core Tools
+## Core Tools, Bun, Claude Code, and PAI v3.0
 
-These are installed during the initial system setup:
+We have a full walkthrough covering everything from a fresh Ubuntu VM through a working PAI installation:
+
+- **Blog post:** [Setting Up Your Personal AI Assistant](https://chriscantey.com/posts/2026-02-02-setting-up-your-personal-ai-assistant/)
+- **Video:** [Watch on YouTube](https://www.youtube.com/watch?v=ZZ6B06GfD-w)
+
+If you prefer direct instructions, here's the short version:
 
 ```bash
+# Core tools
 sudo apt update && sudo apt install -y curl git zip unzip
-```
 
-## Bun Runtime
-
-```bash
+# Bun runtime
 curl -fsSL https://bun.sh/install | bash
 source ~/.bashrc
+
+# Claude Code - follow Anthropic's official install instructions
+
+# PAI v3.0 - install via the PAI wizard
+# See: https://github.com/danielmiessler/PAI
 ```
-
-## Claude Code
-
-Follow Anthropic's official install instructions for Claude Code.
-
-## PAI v3.0
-
-Installed via the PAI install wizard. See [danielmiessler/PAI](https://github.com/danielmiessler/PAI).
 
 ## Docker
 
