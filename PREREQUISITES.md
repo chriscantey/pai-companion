@@ -1,57 +1,85 @@
-# Prerequisites (Pre-Install Checklist)
+# Prerequisites
 
-This documents what should be installed in the VM **before** running the companion setup.
+What to install before running the companion setup. The companion setup (`README.md`) assumes everything in the **Required** section is present.
 
-The companion setup (`README.md`) assumes these are already present. If anything is missing, the setup will fail or degrade.
-
-## Core Tools, Bun, Claude Code, and PAI v3.0
-
-We have a full walkthrough covering everything from a fresh Ubuntu VM through a working PAI installation:
+We have a full walkthrough covering everything from a fresh VM through a working PAI installation:
 
 - **Blog post:** [Setting Up Your Personal AI Assistant](https://chriscantey.com/posts/2026-02-02-setting-up-your-personal-ai-assistant/)
 - **Video:** [Watch on YouTube](https://www.youtube.com/watch?v=ZZ6B06GfD-w)
 
-If you prefer direct instructions, here's the short version:
+If you prefer direct instructions, follow the steps below.
+
+---
+
+## Required
+
+These five steps get you from a fresh Debian or Ubuntu VM to ready for the companion setup. Run everything as a regular user, not root. Commands that need elevated privileges already use `sudo`.
+
+### Step 1: System packages
 
 ```bash
-# Core tools
-sudo apt update && sudo apt install -y curl git zip unzip
+sudo apt update && sudo apt install -y curl git zip
+```
 
-# Claude Code (https://docs.anthropic.com/en/docs/claude-code/overview)
-curl -fsSL https://claude.ai/install.sh | bash
+### Step 2: Bun runtime
 
-# Bun runtime
+```bash
 curl -fsSL https://bun.sh/install | bash
 source ~/.bashrc
+```
 
-# PAI v3.0 (https://github.com/danielmiessler/PAI/tree/main/Releases/v3.0)
+### Step 3: Claude Code
+
+```bash
+curl -fsSL https://claude.ai/install.sh | bash
+```
+
+After installing, run `claude` once to authenticate with your Anthropic API key.
+
+### Step 4: Docker
+
+Docker's official install script works across Debian 12/13, Ubuntu 24.04+, and other Linux distros. It installs Docker Engine and the Compose v2 plugin in one step.
+
+```bash
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+```
+
+**Important:** Log out and back in (or reboot) after adding yourself to the docker group. The next step won't work until you do.
+
+### Step 5: PAI v3.0
+
+```bash
 git clone https://github.com/danielmiessler/PAI.git
 cp -r PAI/Releases/v3.0/.claude ~/
 cd ~/.claude && bash install.sh
 ```
 
-## Docker
+### Verify
 
-Required for the portal server:
+After logging back in (for docker group), confirm everything is working:
 
 ```bash
-sudo apt install -y docker.io docker-compose-v2
-sudo usermod -aG docker $USER
+which git curl bun claude
+docker run --rm hello-world && docker rmi hello-world
+docker compose version
+claude --version
+cat ~/.claude/skills/PAI/SKILL.md | head -5
 ```
 
-**Important:** Log out and back in (or reboot) after adding to docker group.
+All commands should succeed. If any fail, revisit the corresponding step above.
 
-Verify Docker works without sudo:
-```bash
-docker run --rm hello-world
-docker rmi hello-world
-```
+---
 
-## Playwright Dependencies (Optional)
+## Recommended
 
-Optional but recommended. Enables the Browser skill (web page screenshots and automation). You can always install this later if you skip it now.
+These are optional. You can always install them later.
 
-### Method 1: Standard Install
+### Playwright (Browser skill)
+
+Enables the Browser skill for web page screenshots and automation. Not required for the companion setup itself, but useful once your assistant is running.
+
+#### Method 1: Standard install
 
 ```bash
 # Install the playwright package in the Browser skill
@@ -67,7 +95,7 @@ cd ~/.claude/skills/Browser && bun run node_modules/.bin/playwright install chro
 
 **Note:** The download shows "100%" after the first component, then downloads a second with no progress bar. Let it sit for up to 5 minutes. If it's still stuck after that, Ctrl+C and use Method 2.
 
-### Method 2: Manual Download (if Method 1 hangs)
+#### Method 2: Manual download (if Method 1 hangs)
 
 We've seen the automated installer hang on some systems, particularly ARM64 Linux VMs (e.g., UTM/Parallels on Mac). If Method 1 doesn't complete, this approach downloads the same files directly:
 
@@ -99,9 +127,7 @@ unzip /tmp/headless-shell.zip -d ~/.cache/ms-playwright/chromium_headless_shell-
 rm /tmp/chromium.zip /tmp/headless-shell.zip
 ```
 
-### Verify
-
-Whichever method you used, confirm Playwright can actually take a screenshot:
+#### Verify Playwright
 
 ```bash
 cd ~/.claude/skills/Browser && bun run node_modules/.bin/playwright screenshot \
@@ -110,39 +136,15 @@ cd ~/.claude/skills/Browser && bun run node_modules/.bin/playwright screenshot \
   || echo "Playwright: installed but not functional - check deps"
 ```
 
-## Useful CLI Tools
+### Useful CLI tools
 
-These are optional but recommended. The AI assistant will use them if available:
-
-```bash
-sudo apt install -y \
-  jq tree tmux wget whois dnsutils \
-  imagemagick ffmpeg python3-venv
-```
-
-## Verification
-
-Run these to confirm everything is installed correctly:
+The AI assistant will use these if available. None are required, but they make the assistant more capable:
 
 ```bash
-# Core tools
-which git curl bun claude
-
-# Docker (without sudo)
-docker run --rm hello-world && docker rmi hello-world
-
-# Playwright (optional) - functional test, not just binary check
-cd ~/.claude/skills/Browser && bun run node_modules/.bin/playwright screenshot \
-  --browser chromium https://example.com /tmp/playwright-test.png 2>/dev/null \
-  && echo "Playwright: OK" \
-  || echo "Playwright: not installed or not functional (optional)"
-
-# PAI v3.0 installed
-cat ~/.claude/skills/PAI/SKILL.md | head -5
-
-# Claude Code authenticated
-claude --version
+sudo apt install -y jq tree tmux wget whois dnsutils imagemagick ffmpeg python3-venv
 ```
+
+---
 
 ## What the Companion Setup Handles
 
