@@ -4,7 +4,7 @@
 
 A companion setup package that adds visual output and file sharing capabilities to a [PAI v3.0](https://github.com/danielmiessler/PAI) installation. PAI provides the core AI infrastructure (skills, hooks, the Algorithm). This package layers on a web portal, design system, and directory conventions so your assistant can deliver styled visual output and exchange files with you through a browser.
 
-Designed for users running PAI on a local Ubuntu VM.
+Designed for users running PAI on a local Linux VM (Debian, Ubuntu, or similar).
 
 **What this adds on top of PAI:**
 - Portal server for viewing AI-created web pages, dashboards, and reports
@@ -27,12 +27,12 @@ Designed for users running PAI on a local Ubuntu VM.
 If you were directed here by your user to set up their system, follow the phases below. Each phase is independently verifiable. If interrupted, you can resume from any phase.
 
 **Prerequisites (must already be installed):** See [PREREQUISITES.md](PREREQUISITES.md)
-- Ubuntu 24.04 Server VM (any hypervisor: UTM, VMware, VirtualBox, Proxmox, etc.)
+- A Debian or Ubuntu VM (any hypervisor: UTM, VMware, VirtualBox, Proxmox, etc.)
+- curl, git, and zip
+- Bun runtime
 - Claude Code installed and authenticated
-- Bun runtime installed
-- PAI v3.0 installed via the install wizard
 - Docker installed and working without sudo
-- Playwright Chromium installed (optional, for Browser skill)
+- PAI v3.0 installed
 
 **Where are the companion files?** Either cloned to `~/pai-companion/` or available at the GitHub raw URL. Read files from whichever location your user directed you to.
 
