@@ -15,6 +15,10 @@ If you prefer direct instructions, follow the steps below.
 
 These five steps get you from a fresh Debian or Ubuntu VM to ready for the companion setup. Run everything as a regular user, not root. Commands that need elevated privileges already use `sudo`.
 
+> **Why not let the assistant do this?** We don't give Claude Code sudo access. That's intentional. These prerequisites require elevated privileges, so you run them yourself. Once the setup is done, the companion phases don't need sudo at all.
+
+> **Need a non-root user?** Ubuntu creates one during installation. Some distros (like Debian) default to root only. If you need to create a regular user with sudo access, [this guide](https://www.digitalocean.com/community/tutorials/how-to-create-a-new-sudo-enabled-user-on-ubuntu) covers the steps (works on Debian too).
+
 ### Step 1: System packages
 
 ```bash
@@ -38,10 +42,10 @@ After installing, run `claude` once to authenticate with your Anthropic API key.
 
 ### Step 4: Docker
 
-Docker's official install script works across Debian 12/13, Ubuntu 24.04+, and other Linux distros. It installs Docker Engine and the Compose v2 plugin in one step.
+This should work on most Linux distros. It installs Docker Engine and the Compose v2 plugin in one step.
 
 ```bash
-curl -fsSL https://get.docker.com | sh
+curl -fsSL https://get.docker.com | bash
 sudo usermod -aG docker $USER
 ```
 
@@ -74,6 +78,14 @@ All commands should succeed. If any fail, revisit the corresponding step above.
 ## Recommended
 
 These are optional. You can always install them later.
+
+### Useful CLI tools
+
+The AI assistant will use these if available. None are required, but they make the assistant more capable:
+
+```bash
+sudo apt install -y jq tree tmux wget whois dnsutils imagemagick ffmpeg python3-venv
+```
 
 ### Playwright (Browser skill)
 
@@ -134,14 +146,6 @@ cd ~/.claude/skills/Browser && bun run node_modules/.bin/playwright screenshot \
   --browser chromium https://example.com /tmp/playwright-test.png \
   && echo "Playwright: fully working" \
   || echo "Playwright: installed but not functional - check deps"
-```
-
-### Useful CLI tools
-
-The AI assistant will use these if available. None are required, but they make the assistant more capable:
-
-```bash
-sudo apt install -y jq tree tmux wget whois dnsutils imagemagick ffmpeg python3-venv
 ```
 
 ---
