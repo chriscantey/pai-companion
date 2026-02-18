@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PAI Voice</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0d1220;
+      --bg-secondary: #141c2c;
+      --bg-tertiary: #1c2638;
+      --text-primary: #f0f2f5;
+      --text-secondary: #c0c8d4;
+      --text-muted: #8a919d;
+      --cyan: #12c2e9;
+      --purple: #c471ed;
+      --pink: #ff6b9d;
+      --teal: #2dd4bf;
+      --orange: #F39C12;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .voice-panel {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem;
+      width: 380px;
+      text-align: center;
+    }
+    .voice-panel h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--cyan);
+      margin-bottom: 0.25rem;
+    }
+    .voice-panel .subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+    }
+
+    /* Status indicator */
+    .status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      transition: background 0.3s;
+    }
+    .status-dot.connected { background: var(--teal); box-shadow: 0 0 8px rgba(45, 212, 191, 0.4); }
+    .status-dot.connecting { background: var(--orange); animation: pulse 1.5s infinite; }
+    .status-dot.error { background: var(--pink); }
+    .status-text { color: var(--text-secondary); }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* Speaking indicator */
+    .speaking-indicator {
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      margin-bottom: 1.5rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .speaking-indicator.active { opacity: 1; }
+    .speaking-bar {
+      width: 4px;
+      height: 8px;
+      background: var(--cyan);
+      border-radius: 2px;
+      transition: height 0.15s;
+    }
+    .speaking-indicator.active .speaking-bar {
+      animation: bars 0.8s ease-in-out infinite;
+    }
+    .speaking-bar:nth-child(1) { animation-delay: 0s; }
+    .speaking-bar:nth-child(2) { animation-delay: 0.1s; }
+    .speaking-bar:nth-child(3) { animation-delay: 0.2s; }
+    .speaking-bar:nth-child(4) { animation-delay: 0.3s; }
+    .speaking-bar:nth-child(5) { animation-delay: 0.2s; }
+    .speaking-bar:nth-child(6) { animation-delay: 0.1s; }
+    .speaking-bar:nth-child(7) { animation-delay: 0s; }
+
+    @keyframes bars {
+      0%, 100% { height: 8px; }
+      50% { height: 32px; }
+    }
+
+    /* Last message */
+    .last-message {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      min-height: 1.5em;
+      margin-bottom: 1.5rem;
+      font-style: italic;
+    }
+
+    /* Server URL input */
+    .server-config {
+      border-top: 1px solid var(--border);
+      padding-top: 1.5rem;
+    }
+    .server-config label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+      text-align: left;
+    }
+    .server-config input {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      outline: none;
+    }
+    .server-config input:focus {
+      border-color: var(--cyan);
+    }
+    .server-config .hint {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.4rem;
+      text-align: left;
+    }
+    .btn-connect {
+      margin-top: 1rem;
+      padding: 0.5rem 1.5rem;
+      background: rgba(18, 194, 233, 0.15);
+      border: 1px solid rgba(18, 194, 233, 0.3);
+      border-radius: 8px;
+      color: var(--cyan);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-connect:hover {
+      background: rgba(18, 194, 233, 0.25);
+      border-color: var(--cyan);
+    }
+
+    /* Volume */
+    .volume-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    .volume-row label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .volume-row input[type="range"] {
+      flex: 1;
+      accent-color: var(--cyan);
+    }
+  </style>
+</head>
+<body>
+  <div class="voice-panel">
+    <h1>PAI Voice</h1>
+    <p class="subtitle">Voice notifications from your AI assistant</p>
+
+    <div class="status">
+      <span class="status-dot" id="statusDot"></span>
+      <span class="status-text" id="statusText">Disconnected</span>
+    </div>
+
+    <div class="speaking-indicator" id="speakingIndicator">
+      <div class="speaking-bar"></div>
+      <div class="speaking-bar"></div>
+      <div class="speaking-bar"></div>
+      <div class="speaking-bar"></div>
+      <div class="speaking-bar"></div>
+      <div class="speaking-bar"></div>
+      <div class="speaking-bar"></div>
+    </div>
+
+    <div class="last-message" id="lastMessage">Waiting for notifications...</div>
+
+    <div class="server-config">
+      <label for="serverUrl">Voice Server</label>
+      <input type="text" id="serverUrl" placeholder="ws://your-server:8888/stream">
+      <div class="hint">WebSocket URL of your PAI voice server</div>
+      <div class="volume-row">
+        <label>Volume</label>
+        <input type="range" id="volume" min="0" max="100" value="80">
+      </div>
+      <button class="btn-connect" id="connectBtn" onclick="toggleConnection()">Connect</button>
+    </div>
+  </div>
+
+  <script>
+    let ws = null;
+    let connected = false;
+    let shouldReconnect = false;
+    let reconnectTimer = null;
+    const audioQueue = [];
+    let isPlaying = false;
+
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    const speakingIndicator = document.getElementById('speakingIndicator');
+    const lastMessage = document.getElementById('lastMessage');
+    const serverUrlInput = document.getElementById('serverUrl');
+    const connectBtn = document.getElementById('connectBtn');
+    const volumeSlider = document.getElementById('volume');
+
+    // Auto-detect server URL (voice server runs on port 8888)
+    const defaultUrl = (() => {
+      const host = window.location.hostname || 'localhost';
+      return `ws://${host}:8888/stream`;
+    })();
+    serverUrlInput.value = localStorage.getItem('pai-voice-url') || defaultUrl;
+
+    function setStatus(state, text) {
+      statusDot.className = 'status-dot ' + state;
+      statusText.textContent = text;
+    }
+
+    function toggleConnection() {
+      if (connected || ws) {
+        disconnect();
+        connectBtn.textContent = 'Connect';
+      } else {
+        connect();
+      }
+    }
+
+    function connect() {
+      const url = serverUrlInput.value.trim();
+      if (!url) return;
+
+      localStorage.setItem('pai-voice-url', url);
+      setStatus('connecting', 'Connecting...');
+      shouldReconnect = true;
+      connectBtn.textContent = 'Disconnect';
+
+      try {
+        ws = new WebSocket(url);
+        ws.binaryType = 'arraybuffer';
+
+        ws.onopen = () => {
+          connected = true;
+          setStatus('connected', 'Connected');
+          clearReconnectTimer();
+        };
+
+        ws.onmessage = (event) => {
+          if (typeof event.data === 'string') {
+            try {
+              const msg = JSON.parse(event.data);
+              if (msg.type === 'notification') {
+                lastMessage.textContent = msg.message;
+              }
+            } catch {}
+          } else if (event.data instanceof ArrayBuffer) {
+            audioQueue.push(event.data);
+            if (!isPlaying) playNext();
+          }
+        };
+
+        ws.onclose = () => {
+          connected = false;
+          ws = null;
+          if (shouldReconnect) {
+            setStatus('connecting', 'Reconnecting...');
+            scheduleReconnect();
+          } else {
+            setStatus('', 'Disconnected');
+          }
+        };
+
+        ws.onerror = () => {
+          setStatus('error', 'Connection error');
+        };
+      } catch (e) {
+        setStatus('error', 'Invalid URL');
+      }
+    }
+
+    function disconnect() {
+      clearReconnectTimer();
+      shouldReconnect = false;
+      connected = false;
+      if (ws) {
+        ws.close();
+        ws = null;
+      }
+      setStatus('', 'Disconnected');
+      connectBtn.textContent = 'Connect';
+    }
+
+    function scheduleReconnect() {
+      clearReconnectTimer();
+      reconnectTimer = setTimeout(() => {
+        if (!connected && shouldReconnect) {
+          connect();
+        }
+      }, 3000);
+    }
+
+    function clearReconnectTimer() {
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+      }
+    }
+
+    async function playNext() {
+      if (audioQueue.length === 0) {
+        isPlaying = false;
+        speakingIndicator.classList.remove('active');
+        return;
+      }
+
+      isPlaying = true;
+      speakingIndicator.classList.add('active');
+      const buffer = audioQueue.shift();
+
+      try {
+        const blob = new Blob([buffer], { type: 'audio/mpeg' });
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audio.volume = volumeSlider.value / 100;
+
+        audio.onended = () => {
+          URL.revokeObjectURL(url);
+          playNext();
+        };
+        audio.onerror = () => {
+          URL.revokeObjectURL(url);
+          playNext();
+        };
+
+        await audio.play();
+      } catch (e) {
+        console.error('Audio playback failed:', e);
+        playNext();
+      }
+    }
+
+    // Auto-connect on load if URL is saved
+    if (localStorage.getItem('pai-voice-url')) {
+      connect();
+    }
+  </script>
+</body>
+</html>

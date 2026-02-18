@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PAI Voice Preview</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0d1220;
+      --bg-secondary: #141c2c;
+      --bg-tertiary: #1c2638;
+      --text-primary: #f0f2f5;
+      --text-secondary: #c0c8d4;
+      --text-muted: #8a919d;
+      --cyan: #12c2e9;
+      --purple: #c471ed;
+      --pink: #ff6b9d;
+      --teal: #2dd4bf;
+      --orange: #F39C12;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+    .container { max-width: 800px; margin: 0 auto; padding: 2rem 1.5rem; }
+    header {
+      text-align: center;
+      padding: 2rem 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2rem;
+    }
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--cyan);
+      margin-bottom: 0.25rem;
+    }
+    header p { color: var(--text-muted); font-size: 0.9rem; }
+
+    .server-bar {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      align-items: center;
+    }
+    .server-bar label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+    .server-bar input {
+      flex: 1;
+      padding: 0.5rem 0.8rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      outline: none;
+    }
+    .server-bar input:focus { border-color: var(--cyan); }
+
+    .preview-text {
+      margin-bottom: 1.5rem;
+    }
+    .preview-text label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.4rem;
+    }
+    .preview-text textarea {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      outline: none;
+      resize: vertical;
+      min-height: 60px;
+    }
+    .preview-text textarea:focus { border-color: var(--cyan); }
+
+    h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    h2 .count {
+      font-weight: 400;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .voice-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+    }
+
+    .voice-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .voice-card:hover {
+      background: var(--bg-tertiary);
+      border-color: rgba(18, 194, 233, 0.3);
+    }
+    .voice-card.playing {
+      border-color: var(--cyan);
+      background: rgba(18, 194, 233, 0.08);
+    }
+    .voice-card.selected {
+      border-color: var(--teal);
+      background: rgba(45, 212, 191, 0.08);
+    }
+
+    .voice-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .voice-icon.female { background: rgba(196, 113, 237, 0.2); color: var(--purple); }
+    .voice-icon.male { background: rgba(18, 194, 233, 0.2); color: var(--cyan); }
+
+    .voice-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .voice-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .voice-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .play-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(18, 194, 233, 0.15);
+      border: none;
+      color: var(--cyan);
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .play-btn:hover { background: rgba(18, 194, 233, 0.3); }
+    .play-btn.loading { opacity: 0.5; pointer-events: none; }
+
+    .show-more {
+      text-align: center;
+      margin: 1.5rem 0;
+    }
+    .show-more button {
+      padding: 0.5rem 2rem;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .show-more button:hover {
+      background: var(--bg-tertiary);
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    .selected-voice {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .selected-voice .label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .selected-voice .value {
+      font-size: 0.95rem;
+      color: var(--teal);
+      font-weight: 600;
+    }
+    .selected-voice code {
+      font-size: 0.8rem;
+      background: var(--bg-tertiary);
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      color: var(--cyan);
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      border-top: 1px solid var(--border);
+      margin-top: 2rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+    footer a { color: var(--cyan); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    .error-msg {
+      background: rgba(255, 107, 157, 0.1);
+      border: 1px solid rgba(255, 107, 157, 0.3);
+      border-radius: 8px;
+      padding: 0.8rem 1rem;
+      color: var(--pink);
+      font-size: 0.85rem;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Voice Preview</h1>
+      <p>Listen to Kokoro voices and choose your default</p>
+    </header>
+
+    <div class="server-bar">
+      <label>Server</label>
+      <input type="text" id="serverUrl" placeholder="http://localhost:8888">
+    </div>
+
+    <div class="preview-text">
+      <label>Preview Text</label>
+      <textarea id="previewText">Hello! I'm your PAI assistant. I'll keep you updated on task progress and important notifications.</textarea>
+    </div>
+
+    <div id="errorMsg" class="error-msg"></div>
+
+    <div class="selected-voice" id="selectedVoice" style="display:none">
+      <div>
+        <div class="label">Selected Voice</div>
+        <div class="value" id="selectedName"></div>
+      </div>
+      <code id="selectedCode"></code>
+    </div>
+
+    <h2>English Voices <span class="count" id="voiceCount"></span></h2>
+    <div class="voice-grid" id="voiceGrid"></div>
+
+    <div class="show-more" id="showMoreSection" style="display:none">
+      <button onclick="showAllVoices()">Show All Languages</button>
+    </div>
+
+    <div id="allVoicesSection" style="display:none">
+      <h2>All Voices <span class="count" id="allVoiceCount"></span></h2>
+      <div class="voice-grid" id="allVoiceGrid"></div>
+    </div>
+
+    <footer>
+      Powered by <a href="https://github.com/hexgrad/kokoro" target="_blank">Kokoro TTS</a> (82M params, Apache 2.0)
+    </footer>
+  </div>
+
+  <script>
+    // Voice metadata
+    const LANG_MAP = {
+      'a': 'American',
+      'b': 'British',
+      'e': 'Spanish',
+      'f': 'French',
+      'h': 'Hindi',
+      'i': 'Italian',
+      'j': 'Japanese',
+      'p': 'Portuguese',
+      'z': 'Chinese'
+    };
+
+    // Curated English voices (skip v0 variants)
+    const ENGLISH_CURATED = new Set([
+      'af_alloy', 'af_bella', 'af_heart', 'af_jessica', 'af_nicole', 'af_nova', 'af_river', 'af_sarah', 'af_sky',
+      'am_adam', 'am_echo', 'am_eric', 'am_liam', 'am_michael', 'am_onyx', 'am_puck',
+      'bf_alice', 'bf_emma', 'bf_lily',
+      'bm_daniel', 'bm_fable', 'bm_george', 'bm_lewis'
+    ]);
+
+    let allVoices = [];
+    let currentAudio = null;
+    let selectedVoice = localStorage.getItem('pai-voice-selected') || 'af_heart';
+
+    // Auto-detect server URL
+    const defaultServer = (() => {
+      const host = window.location.hostname || 'localhost';
+      const proto = window.location.protocol === 'https:' ? 'https:' : 'http:';
+      return `${proto}//${host}:8888`;
+    })();
+    const serverInput = document.getElementById('serverUrl');
+    serverInput.value = localStorage.getItem('pai-voice-server') || defaultServer;
+
+    function showError(msg) {
+      const el = document.getElementById('errorMsg');
+      el.textContent = msg;
+      el.style.display = msg ? 'block' : 'none';
+    }
+
+    function getDisplayName(voiceId) {
+      const parts = voiceId.split('_');
+      if (parts.length < 2) return voiceId;
+      const name = parts.slice(1).join('_');
+      return name.charAt(0).toUpperCase() + name.slice(1);
+    }
+
+    function getGender(voiceId) {
+      return voiceId[1] === 'f' ? 'female' : 'male';
+    }
+
+    function getAccent(voiceId) {
+      const lang = voiceId[0];
+      return LANG_MAP[lang] || lang.toUpperCase();
+    }
+
+    function createVoiceCard(voiceId) {
+      const gender = getGender(voiceId);
+      const name = getDisplayName(voiceId);
+      const accent = getAccent(voiceId);
+      const isSelected = voiceId === selectedVoice;
+
+      const card = document.createElement('div');
+      card.className = `voice-card${isSelected ? ' selected' : ''}`;
+      card.dataset.voice = voiceId;
+
+      const icon = document.createElement('div');
+      icon.className = `voice-icon ${gender}`;
+      icon.textContent = gender === 'female' ? '\u2640' : '\u2642';
+
+      const info = document.createElement('div');
+      info.className = 'voice-info';
+      const nameEl = document.createElement('div');
+      nameEl.className = 'voice-name';
+      nameEl.textContent = name;
+      const metaEl = document.createElement('div');
+      metaEl.className = 'voice-meta';
+      metaEl.textContent = `${accent} ${gender}`;
+      info.appendChild(nameEl);
+      info.appendChild(metaEl);
+
+      const playBtn = document.createElement('button');
+      playBtn.className = 'play-btn';
+      playBtn.textContent = '\u25B6';
+      playBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        previewVoice(voiceId, playBtn);
+      });
+
+      card.appendChild(icon);
+      card.appendChild(info);
+      card.appendChild(playBtn);
+      card.addEventListener('click', () => selectVoice(voiceId));
+      return card;
+    }
+
+    function selectVoice(voiceId) {
+      selectedVoice = voiceId;
+      localStorage.setItem('pai-voice-selected', voiceId);
+
+      // Update UI
+      document.querySelectorAll('.voice-card').forEach(c => {
+        c.classList.toggle('selected', c.dataset.voice === voiceId);
+      });
+
+      const sv = document.getElementById('selectedVoice');
+      sv.style.display = 'flex';
+      document.getElementById('selectedName').textContent = getDisplayName(voiceId);
+      document.getElementById('selectedCode').textContent = `KOKORO_VOICE=${voiceId}`;
+    }
+
+    async function previewVoice(voiceId, btn) {
+      // Stop current preview
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+        document.querySelectorAll('.voice-card.playing').forEach(c => c.classList.remove('playing'));
+      }
+
+      const server = serverInput.value.trim();
+      localStorage.setItem('pai-voice-server', server);
+      const text = document.getElementById('previewText').value.trim();
+      if (!text) return;
+
+      btn.classList.add('loading');
+      btn.innerHTML = '&#8987;';
+      const card = btn.closest('.voice-card');
+      card.classList.add('playing');
+      showError('');
+
+      try {
+        const res = await fetch(`${server}/tts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, voice: voiceId })
+        });
+
+        if (!res.ok) {
+          const err = await res.text();
+          throw new Error(err);
+        }
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        currentAudio = audio;
+
+        audio.onended = () => {
+          URL.revokeObjectURL(url);
+          card.classList.remove('playing');
+          btn.classList.remove('loading');
+          btn.innerHTML = '&#9654;';
+          currentAudio = null;
+        };
+        audio.onerror = () => {
+          URL.revokeObjectURL(url);
+          card.classList.remove('playing');
+          btn.classList.remove('loading');
+          btn.innerHTML = '&#9654;';
+          currentAudio = null;
+        };
+
+        await audio.play();
+        btn.innerHTML = '&#9632;';
+        btn.classList.remove('loading');
+      } catch (e) {
+        card.classList.remove('playing');
+        btn.classList.remove('loading');
+        btn.innerHTML = '&#9654;';
+        showError(`Could not generate preview: ${e.message}. Is the voice server running?`);
+      }
+    }
+
+    function renderVoices() {
+      const grid = document.getElementById('voiceGrid');
+      grid.innerHTML = '';
+
+      const english = allVoices.filter(v => ENGLISH_CURATED.has(v));
+      document.getElementById('voiceCount').textContent = `(${english.length})`;
+
+      english.forEach(v => grid.appendChild(createVoiceCard(v)));
+
+      // Show "more" button if there are non-English voices
+      const others = allVoices.filter(v => !ENGLISH_CURATED.has(v) && !v.includes('v0'));
+      if (others.length > 0) {
+        document.getElementById('showMoreSection').style.display = 'block';
+      }
+
+      // Show selected
+      if (selectedVoice) selectVoice(selectedVoice);
+    }
+
+    function showAllVoices() {
+      const section = document.getElementById('allVoicesSection');
+      section.style.display = 'block';
+      document.getElementById('showMoreSection').style.display = 'none';
+
+      const grid = document.getElementById('allVoiceGrid');
+      grid.innerHTML = '';
+
+      const others = allVoices.filter(v => !ENGLISH_CURATED.has(v) && !v.includes('v0'));
+      document.getElementById('allVoiceCount').textContent = `(${others.length})`;
+
+      others.forEach(v => grid.appendChild(createVoiceCard(v)));
+    }
+
+    // Load voices from server or use hardcoded defaults
+    async function loadVoices() {
+      const server = serverInput.value.trim();
+      try {
+        const res = await fetch(`${server}/voices`);
+        const data = await res.json();
+        allVoices = data.voices || [];
+      } catch {
+        // Hardcoded fallback (known Kokoro v1.0 voices)
+        allVoices = [
+          'af_alloy','af_aoede','af_bella','af_heart','af_jadzia','af_jessica','af_kore','af_nicole','af_nova','af_river','af_sarah','af_sky',
+          'am_adam','am_echo','am_eric','am_fenrir','am_liam','am_michael','am_onyx','am_puck','am_santa',
+          'bf_alice','bf_emma','bf_lily',
+          'bm_daniel','bm_fable','bm_george','bm_lewis',
+          'ef_dora','em_alex','em_santa',
+          'ff_siwis',
+          'hf_alpha','hf_beta','hm_omega','hm_psi',
+          'if_sara','im_nicola',
+          'jf_alpha','jf_gongitsune','jf_nezumi','jf_tebukuro','jm_kumo',
+          'pf_dora','pm_alex','pm_santa',
+          'zf_xiaobei','zf_xiaoni','zf_xiaoxiao','zf_xiaoyi','zm_yunjian','zm_yunxi','zm_yunxia','zm_yunyang'
+        ];
+      }
+      renderVoices();
+    }
+
+    loadVoices();
+  </script>
+</body>
+</html>

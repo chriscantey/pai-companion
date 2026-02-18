@@ -1,0 +1,40 @@
+services:
+  voice-server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: voice-server
+    restart: unless-stopped
+    ports:
+      - "8888:8888"
+    volumes:
+      - ${HOME}/.claude/.env:/app/.env:ro
+    environment:
+      - PAI_DIR=/app
+      - PAI_VOICE_STREAM_PORT=8888
+      - KOKORO_URL=http://voice-server-kokoro:7880
+      - KOKORO_VOICE=${KOKORO_VOICE:-af_heart}
+    depends_on:
+      kokoro:
+        condition: service_healthy
+    networks:
+      - pai-network
+
+  kokoro:
+    build:
+      context: ./kokoro
+      dockerfile: Dockerfile
+    container_name: voice-server-kokoro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7880/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 45s
+    networks:
+      - pai-network
+
+networks:
+  pai-network:
+    external: true

@@ -1,0 +1,11 @@
+{
+  "name": "pai-voice-server",
+  "version": "1.0.0",
+  "description": "PAI Voice Server - Kokoro TTS notification and streaming",
+  "type": "module",
+  "main": "server.ts",
+  "scripts": {
+    "start": "bun run server.ts",
+    "dev": "bun --watch run server.ts"
+  }
+}
