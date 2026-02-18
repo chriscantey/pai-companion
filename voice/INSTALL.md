@@ -87,7 +87,7 @@ Generate a test notification to verify end-to-end TTS works.
    ```bash
    curl -s -X POST http://localhost:8888/notify \
      -H "Content-Type: application/json" \
-     -d '{"message": "Voice server is working. Hello from PAI!"}' | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['status'])"
+     -d '{"message": "Voice server is working"}' | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['status'])"
    ```
    Expected output: `success`
 
