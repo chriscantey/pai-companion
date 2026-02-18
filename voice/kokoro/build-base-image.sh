@@ -69,7 +69,8 @@ RUN pip install --no-cache-dir \
 RUN pip install --no-cache-dir \
     kokoro>=0.8 \
     soundfile \
-    numpy
+    numpy \
+    ordered_set
 
 # Clone Kokoro repo for model and voice files
 RUN git clone --depth 1 https://github.com/hexgrad/kokoro.git /tmp/kokoro
@@ -83,18 +84,17 @@ RUN pip install --no-cache-dir huggingface_hub && \
     hf_hub_download('hexgrad/Kokoro-82M', 'kokoro-v1_0.pth', \
     local_dir='/app/api/src/models/v1_0')"
 
-# Download voice files from HuggingFace
+# Download voice files from HuggingFace (repo may use voices/*.pt or voices/v1_0/*.pt)
 RUN python3 -c "\
 from huggingface_hub import snapshot_download; \
 snapshot_download('hexgrad/Kokoro-82M', \
-    allow_patterns='voices/v1_0/*.pt', \
+    allow_patterns='voices/**/*.pt', \
     local_dir='/tmp/kokoro-files')" && \
-    cp /tmp/kokoro-files/voices/v1_0/*.pt /app/api/src/voices/v1_0/ && \
+    find /tmp/kokoro-files/voices -name '*.pt' -exec cp {} /app/api/src/voices/v1_0/ \; && \
     rm -rf /tmp/kokoro-files
 
-# Cleanup
+# Cleanup (keep huggingface_hub — runtime dependency of kokoro via transformers)
 RUN rm -rf /tmp/kokoro && \
-    pip uninstall -y huggingface_hub && \
     pip cache purge
 
 EXPOSE 7880

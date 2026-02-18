@@ -205,6 +205,44 @@ test -d ~/.claude/skills/VoiceServer && echo "FAIL (upstream VoiceServer active)
 
 ---
 
+### Phase 8: PAI Hook Patches
+
+PAI's default hooks were designed for cloud TTS (ElevenLabs). Local Kokoro TTS needs two adjustments:
+
+**Step 8a: Fix voice notification timeout**
+
+The default 3-second timeout is too short for local TTS synthesis. This extends it to 15 seconds:
+
+```bash
+bash ~/pai-companion/voice/patches/voice-timeout.sh
+```
+
+**Step 8b: Validate timezone** (prevents silent crashes)
+
+PAI's time system requires IANA timezone IDs (e.g. `America/Los_Angeles`). Abbreviations like `PST` silently crash the voice pipeline and time-dependent hooks:
+
+```bash
+bash ~/pai-companion/companion/patches/timezone-validate.sh
+```
+
+**Verification:**
+```bash
+# Timeout patched
+echo -n "Voice timeout: "
+grep -oP 'setTimeout\(\(\) => controller\.abort\(\), \K[0-9]+' ~/.claude/hooks/handlers/VoiceNotification.ts 2>/dev/null | awk '{print ($1 >= 15000) ? "PASS ("$1"ms)" : "FAIL ("$1"ms - too short)"}'
+
+# Timezone valid
+echo -n "Timezone: "
+TZ_VAL=$(jq -r '.principal.timezone // empty' ~/.claude/settings.json 2>/dev/null)
+if [ -n "$TZ_VAL" ]; then
+  bun -e "try { Intl.DateTimeFormat('en', { timeZone: '$TZ_VAL' }); console.log('PASS ($TZ_VAL)'); } catch { console.log('FAIL ($TZ_VAL is not a valid IANA timezone)'); }" 2>/dev/null || echo "FAIL (could not validate)"
+else
+  echo "SKIP (no timezone set)"
+fi
+```
+
+---
+
 ### Final Verification
 
 Run the full voice module check:
@@ -233,6 +271,18 @@ test -f ~/portal/voice/index.html 2>/dev/null && echo "PASS" || echo "SKIP (stan
 
 echo -n "Upstream VoiceServer disabled: "
 test -d ~/.claude/skills/VoiceServer && echo "FAIL (disable it)" || echo "PASS"
+
+echo -n "Voice timeout patched: "
+TIMEOUT=$(grep -oP 'setTimeout\(\(\) => controller\.abort\(\), \K[0-9]+' ~/.claude/hooks/handlers/VoiceNotification.ts 2>/dev/null || echo "0")
+[ "$TIMEOUT" -ge 15000 ] 2>/dev/null && echo "PASS (${TIMEOUT}ms)" || echo "FAIL (${TIMEOUT}ms)"
+
+echo -n "Timezone valid: "
+TZ_VAL=$(jq -r '.principal.timezone // empty' ~/.claude/settings.json 2>/dev/null)
+if [ -n "$TZ_VAL" ]; then
+  bun -e "try { Intl.DateTimeFormat('en', { timeZone: '$TZ_VAL' }); console.log('PASS ($TZ_VAL)'); } catch { console.log('FAIL ($TZ_VAL)'); }" 2>/dev/null || echo "SKIP"
+else
+  echo "SKIP (no timezone set)"
+fi
 
 echo ""
 echo "=== Voice Module Verification Complete ==="

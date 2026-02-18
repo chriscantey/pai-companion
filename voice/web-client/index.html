@@ -27,27 +27,29 @@
       color: var(--text-primary);
       min-height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: 1.5rem;
     }
     .voice-panel {
       background: var(--bg-secondary);
       border: 1px solid var(--border);
       border-radius: 16px;
-      padding: 2.5rem;
-      width: 380px;
+      padding: 2rem 2.5rem;
+      width: 340px;
       text-align: center;
     }
     .voice-panel h1 {
-      font-size: 1.5rem;
+      font-size: 1.3rem;
       font-weight: 700;
       color: var(--cyan);
       margin-bottom: 0.25rem;
     }
     .voice-panel .subtitle {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       color: var(--text-muted);
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
     }
 
     /* Status indicator */
@@ -56,8 +58,8 @@
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      margin-bottom: 1.5rem;
-      font-size: 0.9rem;
+      margin-bottom: 1.25rem;
+      font-size: 0.85rem;
     }
     .status-dot {
       width: 10px;
@@ -78,12 +80,12 @@
 
     /* Speaking indicator */
     .speaking-indicator {
-      height: 48px;
+      height: 40px;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 4px;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
       opacity: 0;
       transition: opacity 0.3s;
     }
@@ -93,7 +95,6 @@
       height: 8px;
       background: var(--cyan);
       border-radius: 2px;
-      transition: height 0.15s;
     }
     .speaking-indicator.active .speaking-bar {
       animation: bars 0.8s ease-in-out infinite;
@@ -108,67 +109,16 @@
 
     @keyframes bars {
       0%, 100% { height: 8px; }
-      50% { height: 32px; }
+      50% { height: 28px; }
     }
 
     /* Last message */
     .last-message {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       color: var(--text-muted);
       min-height: 1.5em;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.25rem;
       font-style: italic;
-    }
-
-    /* Server URL input */
-    .server-config {
-      border-top: 1px solid var(--border);
-      padding-top: 1.5rem;
-    }
-    .server-config label {
-      display: block;
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.5rem;
-      text-align: left;
-    }
-    .server-config input {
-      width: 100%;
-      padding: 0.6rem 0.8rem;
-      background: var(--bg-tertiary);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text-primary);
-      font-family: 'Inter', sans-serif;
-      font-size: 0.85rem;
-      outline: none;
-    }
-    .server-config input:focus {
-      border-color: var(--cyan);
-    }
-    .server-config .hint {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      margin-top: 0.4rem;
-      text-align: left;
-    }
-    .btn-connect {
-      margin-top: 1rem;
-      padding: 0.5rem 1.5rem;
-      background: rgba(18, 194, 233, 0.15);
-      border: 1px solid rgba(18, 194, 233, 0.3);
-      border-radius: 8px;
-      color: var(--cyan);
-      font-family: 'Inter', sans-serif;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .btn-connect:hover {
-      background: rgba(18, 194, 233, 0.25);
-      border-color: var(--cyan);
     }
 
     /* Volume */
@@ -176,16 +126,31 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      margin-top: 1rem;
+      border-top: 1px solid var(--border);
+      padding-top: 1rem;
     }
     .volume-row label {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
       white-space: nowrap;
     }
     .volume-row input[type="range"] {
       flex: 1;
       accent-color: var(--cyan);
+    }
+
+    /* Voice link */
+    .voice-link {
+      font-size: 0.85rem;
+    }
+    .voice-link a {
+      color: var(--cyan);
+      text-decoration: none;
+    }
+    .voice-link a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
@@ -195,8 +160,8 @@
     <p class="subtitle">Voice notifications from your AI assistant</p>
 
     <div class="status">
-      <span class="status-dot" id="statusDot"></span>
-      <span class="status-text" id="statusText">Disconnected</span>
+      <span class="status-dot connecting" id="statusDot"></span>
+      <span class="status-text" id="statusText">Connecting...</span>
     </div>
 
     <div class="speaking-indicator" id="speakingIndicator">
@@ -211,22 +176,19 @@
 
     <div class="last-message" id="lastMessage">Waiting for notifications...</div>
 
-    <div class="server-config">
-      <label for="serverUrl">Voice Server</label>
-      <input type="text" id="serverUrl" placeholder="ws://your-server:8888/stream">
-      <div class="hint">WebSocket URL of your PAI voice server</div>
-      <div class="volume-row">
-        <label>Volume</label>
-        <input type="range" id="volume" min="0" max="100" value="80">
-      </div>
-      <button class="btn-connect" id="connectBtn" onclick="toggleConnection()">Connect</button>
+    <div class="volume-row">
+      <label>Volume</label>
+      <input type="range" id="volume" min="0" max="100" value="80">
     </div>
+  </div>
+
+  <div class="voice-link">
+    <a href="voices.html">Browse and preview voices</a>
   </div>
 
   <script>
     let ws = null;
     let connected = false;
-    let shouldReconnect = false;
     let reconnectTimer = null;
     const audioQueue = [];
     let isPlaying = false;
@@ -235,39 +197,21 @@
     const statusText = document.getElementById('statusText');
     const speakingIndicator = document.getElementById('speakingIndicator');
     const lastMessage = document.getElementById('lastMessage');
-    const serverUrlInput = document.getElementById('serverUrl');
-    const connectBtn = document.getElementById('connectBtn');
     const volumeSlider = document.getElementById('volume');
 
-    // Auto-detect server URL (voice server runs on port 8888)
-    const defaultUrl = (() => {
+    function getWsUrl() {
       const host = window.location.hostname || 'localhost';
       return `ws://${host}:8888/stream`;
-    })();
-    serverUrlInput.value = localStorage.getItem('pai-voice-url') || defaultUrl;
+    }
 
     function setStatus(state, text) {
       statusDot.className = 'status-dot ' + state;
       statusText.textContent = text;
     }
 
-    function toggleConnection() {
-      if (connected || ws) {
-        disconnect();
-        connectBtn.textContent = 'Connect';
-      } else {
-        connect();
-      }
-    }
-
     function connect() {
-      const url = serverUrlInput.value.trim();
-      if (!url) return;
-
-      localStorage.setItem('pai-voice-url', url);
+      const url = getWsUrl();
       setStatus('connecting', 'Connecting...');
-      shouldReconnect = true;
-      connectBtn.textContent = 'Disconnect';
 
       try {
         ws = new WebSocket(url);
@@ -296,40 +240,23 @@
         ws.onclose = () => {
           connected = false;
           ws = null;
-          if (shouldReconnect) {
-            setStatus('connecting', 'Reconnecting...');
-            scheduleReconnect();
-          } else {
-            setStatus('', 'Disconnected');
-          }
+          setStatus('connecting', 'Reconnecting...');
+          scheduleReconnect();
         };
 
         ws.onerror = () => {
           setStatus('error', 'Connection error');
         };
-      } catch (e) {
-        setStatus('error', 'Invalid URL');
+      } catch {
+        setStatus('error', 'Connection error');
+        scheduleReconnect();
       }
-    }
-
-    function disconnect() {
-      clearReconnectTimer();
-      shouldReconnect = false;
-      connected = false;
-      if (ws) {
-        ws.close();
-        ws = null;
-      }
-      setStatus('', 'Disconnected');
-      connectBtn.textContent = 'Connect';
     }
 
     function scheduleReconnect() {
       clearReconnectTimer();
       reconnectTimer = setTimeout(() => {
-        if (!connected && shouldReconnect) {
-          connect();
-        }
+        if (!connected) connect();
       }, 3000);
     }
 
@@ -373,10 +300,15 @@
       }
     }
 
-    // Auto-connect on load if URL is saved
-    if (localStorage.getItem('pai-voice-url')) {
-      connect();
-    }
+    // Unlock audio playback on first user interaction.
+    // Persists across WebSocket reconnects, preventing silent autoplay blocks.
+    document.addEventListener('click', () => {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      ctx.resume();
+    }, { once: true });
+
+    // Auto-connect immediately
+    connect();
   </script>
 </body>
 </html>

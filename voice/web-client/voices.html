@@ -43,31 +43,23 @@
     }
     header p { color: var(--text-muted); font-size: 0.9rem; }
 
-    .server-bar {
+    .server-status {
       display: flex;
+      align-items: center;
+      justify-content: center;
       gap: 0.5rem;
       margin-bottom: 2rem;
-      align-items: center;
-    }
-    .server-bar label {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      white-space: nowrap;
-    }
-    .server-bar input {
-      flex: 1;
-      padding: 0.5rem 0.8rem;
-      background: var(--bg-tertiary);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text-primary);
-      font-family: 'Inter', sans-serif;
       font-size: 0.85rem;
-      outline: none;
     }
-    .server-bar input:focus { border-color: var(--cyan); }
+    .server-status .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+    .server-status .dot.ok { background: var(--teal); box-shadow: 0 0 6px rgba(45, 212, 191, 0.4); }
+    .server-status .dot.err { background: var(--pink); }
+    .server-status span { color: var(--text-secondary); }
 
     .preview-text {
       margin-bottom: 1.5rem;
@@ -208,31 +200,37 @@
 
     .selected-voice {
       background: var(--bg-secondary);
-      border: 1px solid var(--border);
+      border: 1px solid var(--teal);
       border-radius: 10px;
-      padding: 1rem 1.25rem;
+      padding: 1.25rem;
       margin-bottom: 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
     }
     .selected-voice .label {
       font-size: 0.75rem;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
     }
-    .selected-voice .value {
-      font-size: 0.95rem;
+    .selected-voice .voice-display {
+      font-size: 1rem;
       color: var(--teal);
       font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+    .selected-voice .instruction {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
     }
     .selected-voice code {
-      font-size: 0.8rem;
+      display: block;
+      font-size: 0.85rem;
       background: var(--bg-tertiary);
-      padding: 0.3rem 0.6rem;
-      border-radius: 4px;
+      padding: 0.6rem 0.8rem;
+      border-radius: 6px;
       color: var(--cyan);
+      font-family: 'Inter', monospace;
     }
 
     footer {
@@ -256,6 +254,17 @@
       margin-bottom: 1.5rem;
       display: none;
     }
+
+    .back-link {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .back-link a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+    .back-link a:hover { color: var(--cyan); }
   </style>
 </head>
 <body>
@@ -265,9 +274,13 @@
       <p>Listen to Kokoro voices and choose your default</p>
     </header>
 
-    <div class="server-bar">
-      <label>Server</label>
-      <input type="text" id="serverUrl" placeholder="http://localhost:8888">
+    <div class="back-link">
+      <a href="index.html">&larr; Back to voice player</a>
+    </div>
+
+    <div class="server-status" id="serverStatus">
+      <span class="dot" id="serverDot"></span>
+      <span id="serverText">Checking voice server...</span>
     </div>
 
     <div class="preview-text">
@@ -278,10 +291,9 @@
     <div id="errorMsg" class="error-msg"></div>
 
     <div class="selected-voice" id="selectedVoice" style="display:none">
-      <div>
-        <div class="label">Selected Voice</div>
-        <div class="value" id="selectedName"></div>
-      </div>
+      <div class="label">Selected Voice</div>
+      <div class="voice-display" id="selectedName"></div>
+      <div class="instruction">To use this voice, tell your assistant:</div>
       <code id="selectedCode"></code>
     </div>
 
@@ -329,13 +341,10 @@
     let selectedVoice = localStorage.getItem('pai-voice-selected') || 'af_heart';
 
     // Auto-detect server URL
-    const defaultServer = (() => {
+    const serverUrl = (() => {
       const host = window.location.hostname || 'localhost';
-      const proto = window.location.protocol === 'https:' ? 'https:' : 'http:';
-      return `${proto}//${host}:8888`;
+      return `http://${host}:8888`;
     })();
-    const serverInput = document.getElementById('serverUrl');
-    serverInput.value = localStorage.getItem('pai-voice-server') || defaultServer;
 
     function showError(msg) {
       const el = document.getElementById('errorMsg');
@@ -409,9 +418,9 @@
       });
 
       const sv = document.getElementById('selectedVoice');
-      sv.style.display = 'flex';
-      document.getElementById('selectedName').textContent = getDisplayName(voiceId);
-      document.getElementById('selectedCode').textContent = `KOKORO_VOICE=${voiceId}`;
+      sv.style.display = 'block';
+      document.getElementById('selectedName').textContent = `${getDisplayName(voiceId)} (${voiceId})`;
+      document.getElementById('selectedCode').textContent = `Change my voice to ${voiceId}`;
     }
 
     async function previewVoice(voiceId, btn) {
@@ -422,8 +431,6 @@
         document.querySelectorAll('.voice-card.playing').forEach(c => c.classList.remove('playing'));
       }
 
-      const server = serverInput.value.trim();
-      localStorage.setItem('pai-voice-server', server);
       const text = document.getElementById('previewText').value.trim();
       if (!text) return;
 
@@ -434,7 +441,7 @@
       showError('');
 
       try {
-        const res = await fetch(`${server}/tts`, {
+        const res = await fetch(`${serverUrl}/tts`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text, voice: voiceId })
@@ -509,14 +516,20 @@
       others.forEach(v => grid.appendChild(createVoiceCard(v)));
     }
 
-    // Load voices from server or use hardcoded defaults
-    async function loadVoices() {
-      const server = serverInput.value.trim();
+    // Check server status and load voices
+    async function init() {
+      const dot = document.getElementById('serverDot');
+      const text = document.getElementById('serverText');
+
       try {
-        const res = await fetch(`${server}/voices`);
+        const res = await fetch(`${serverUrl}/voices`);
         const data = await res.json();
         allVoices = data.voices || [];
+        dot.className = 'dot ok';
+        text.textContent = `Voice server connected (${allVoices.length} voices)`;
       } catch {
+        dot.className = 'dot err';
+        text.textContent = 'Voice server not reachable. Showing default voice list.';
         // Hardcoded fallback (known Kokoro v1.0 voices)
         allVoices = [
           'af_alloy','af_aoede','af_bella','af_heart','af_jadzia','af_jessica','af_kore','af_nicole','af_nova','af_river','af_sarah','af_sky',
@@ -535,7 +548,7 @@
       renderVoices();
     }
 
-    loadVoices();
+    init();
   </script>
 </body>
 </html>

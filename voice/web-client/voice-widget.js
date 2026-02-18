@@ -267,8 +267,18 @@
     }
   }
 
+  // Unlock audio playback on first user interaction.
+  // This persists across WebSocket reconnects, preventing silent autoplay blocks.
+  function unlockAudio() {
+    document.addEventListener('click', () => {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      ctx.resume();
+    }, { once: true });
+  }
+
   // Initialize when DOM is ready
   function init() {
+    unlockAudio();
     createWidget();
     connect();
   }
