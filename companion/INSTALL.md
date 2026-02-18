@@ -328,6 +328,24 @@ Install automated maintenance tasks.
 
 ---
 
+### Phase 10b: Validate Timezone
+
+PAI's time system requires IANA timezone IDs (e.g. `America/Los_Angeles`). Abbreviations like `PST` silently crash time-dependent hooks and the voice pipeline.
+
+**Steps:**
+1. Run the timezone validation script:
+   ```bash
+   bash ~/pai-companion/companion/patches/timezone-validate.sh
+   ```
+2. Verify by running it again (should report "Timezone OK"):
+   ```bash
+   bash ~/pai-companion/companion/patches/timezone-validate.sh
+   ```
+
+**Verification:** The second run reports "Timezone OK: ..." with a valid IANA timezone ID. The script is idempotent and safe to run multiple times.
+
+---
+
 ### Phase 11: Welcome Experience and Final Verification
 
 **Steps:**
@@ -400,6 +418,15 @@ git -C ~/work log --oneline -1 >/dev/null 2>&1 && echo "PASS" || echo "FAIL"
 # Phase 10
 echo -n "Cron jobs: "
 crontab -l 2>/dev/null | grep -q "daily snapshot" && echo "PASS" || echo "FAIL"
+
+# Phase 10b
+echo -n "Timezone valid: "
+TZ_VAL=$(jq -r '.principal.timezone // empty' ~/.claude/settings.json 2>/dev/null)
+if [ -n "$TZ_VAL" ]; then
+  bun -e "try { Intl.DateTimeFormat('en', { timeZone: '$TZ_VAL' }); console.log('PASS ($TZ_VAL)'); } catch { console.log('FAIL ($TZ_VAL)'); }" 2>/dev/null || echo "SKIP"
+else
+  echo "SKIP (no timezone set)"
+fi
 
 # Phase 11
 echo -n "Welcome page: "
