@@ -29,6 +29,8 @@ Your assistant will walk through each phase of the setup. If anything breaks or 
 
 Once the core is set up, you can add local text-to-speech so your assistant can speak to you. Phase announcements, task completions, alerts. Audio streams to any browser on your network. Powered by [Kokoro TTS](https://github.com/hexgrad/kokoro), an open-source model that runs on CPU. No cloud APIs, no GPU, fully local and free.
 
+**Heads up:** The voice module uses Docker containers and needs some room. Plan for 30GB+ total disk on your VM and at least 8GB RAM (16GB is more comfortable). See the [voice README](voice/) for details.
+
 - **Blog post:** [Your AI Assistant Can Talk](https://chriscantey.com/posts/2026-02-18-your-ai-assistant-can-talk/)
 - **README:** [Technical details and architecture](voice/)
 

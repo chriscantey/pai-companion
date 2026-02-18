@@ -7,7 +7,8 @@
 - Docker installed and working without sudo
 - Docker network `pai-network` exists (created during portal setup, or run `docker network create pai-network`)
 - Internet connection (for building the Kokoro base image)
-- ~4GB disk space (for model weights and Docker image)
+- ~12GB free disk space during build (settles to ~5GB after cleanup)
+- 8GB RAM minimum (16GB recommended)
 
 ---
 

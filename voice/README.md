@@ -57,6 +57,14 @@ This voice server is a drop-in replacement for upstream PAI's voice server:
 
 The only difference: upstream uses ElevenLabs (paid API, macOS-only playback). This uses Kokoro (free, local, streams to any browser).
 
+## Requirements
+
+The voice module runs entirely in Docker. It benefits from some headroom:
+
+- **Disk:** 30GB+ total on your VM recommended. The build temporarily needs ~12GB free, settling to ~5GB for the final images and containers. More is better since your VM handles other things too.
+- **RAM:** 8GB is the absolute minimum with PAI + Docker + Kokoro. 16GB is more comfortable, especially if you're running other services.
+- **CPU:** No GPU needed. Kokoro runs on CPU and generates speech in 1-3 seconds.
+
 ## Setup
 
 Tell your AI assistant:

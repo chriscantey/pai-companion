@@ -7,8 +7,9 @@
 #   - All 67 voice files
 #   - ffmpeg for MP3 encoding
 #
-# Requirements: Docker, ~4GB disk space, internet connection
+# Requirements: Docker, ~12GB free disk space during build, internet connection
 # Time: 5-15 minutes depending on connection speed
+# Final footprint: ~5GB (image + containers). Build cache cleaned automatically.
 #
 # Usage:
 #   bash build-base-image.sh
@@ -95,8 +96,10 @@ snapshot_download('hexgrad/Kokoro-82M', \
     find /tmp/kokoro-files/voices -name '*.pt' -exec cp {} /app/api/src/voices/v1_0/ \; && \
     rm -rf /tmp/kokoro-files
 
-# Cleanup (keep huggingface_hub — runtime dependency of kokoro via transformers)
-RUN rm -rf /tmp/kokoro && \
+# Cleanup: remove build tools (only needed for pyopenjtalk compilation), temp files, caches
+RUN apt-get purge -y cmake build-essential && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/* /tmp/kokoro /root/.cache && \
     pip cache purge
 
 EXPOSE 7880
@@ -111,6 +114,10 @@ echo ""
 echo "=== Build Complete ==="
 echo "Image: $IMAGE_NAME"
 echo ""
+
+# Clean up Docker build cache to reclaim disk space
+echo "Cleaning build cache..."
+docker builder prune -f 2>/dev/null || true
 
 # Verify
 echo "Verification:"
