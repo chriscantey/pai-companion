@@ -117,7 +117,7 @@ echo ""
 
 # Clean up Docker build cache to reclaim disk space
 echo "Cleaning build cache..."
-docker builder prune -f 2>/dev/null || true
+docker builder prune --all -f 2>/dev/null || true
 
 # Verify
 echo "Verification:"
