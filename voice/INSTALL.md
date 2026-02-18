@@ -211,19 +211,15 @@ PAI's default hooks were designed for cloud TTS (ElevenLabs). Local Kokoro TTS n
 
 **Step 8a: Fix voice notification timeout**
 
-The default 3-second timeout is too short for local TTS synthesis. This extends it to 15 seconds:
-
-```bash
-bash ~/pai-companion/voice/patches/voice-timeout.sh
-```
+The default 3-second timeout in `~/.claude/hooks/handlers/VoiceNotification.ts` is too short for local TTS synthesis. Find the `setTimeout(() => controller.abort(), 3000)` line and change `3000` to `15000`. If the timeout is already >= 15000, no change is needed.
 
 **Step 8b: Validate timezone** (prevents silent crashes)
 
-PAI's time system requires IANA timezone IDs (e.g. `America/Los_Angeles`). Abbreviations like `PST` silently crash the voice pipeline and time-dependent hooks:
+PAI's time system requires IANA timezone IDs (e.g. `America/Los_Angeles`). Abbreviations like `PST` silently crash the voice pipeline and time-dependent hooks.
 
-```bash
-bash ~/pai-companion/companion/patches/timezone-validate.sh
-```
+1. Read `principal.timezone` from `~/.claude/settings.json`
+2. Test if valid: `bun -e "try { Intl.DateTimeFormat('en', { timeZone: 'THE_VALUE' }); console.log('valid'); } catch { console.log('invalid'); }"`
+3. If invalid, replace the abbreviation with the correct IANA ID (PST/PDT → `America/Los_Angeles`, EST/EDT → `America/New_York`, CST/CDT → `America/Chicago`, MST/MDT → `America/Denver`). If unsure, detect via `timedatectl show -p Timezone --value` or `/etc/timezone`. Update `settings.json` with `jq`.
 
 **Verification:**
 ```bash

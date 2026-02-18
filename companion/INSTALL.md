@@ -333,16 +333,25 @@ Install automated maintenance tasks.
 PAI's time system requires IANA timezone IDs (e.g. `America/Los_Angeles`). Abbreviations like `PST` silently crash time-dependent hooks and the voice pipeline.
 
 **Steps:**
-1. Run the timezone validation script:
+1. Read the current timezone from `~/.claude/settings.json` (the `principal.timezone` field).
+2. Test if it's a valid IANA timezone:
    ```bash
-   bash ~/pai-companion/companion/patches/timezone-validate.sh
+   TZ_VAL=$(jq -r '.principal.timezone // empty' ~/.claude/settings.json)
+   bun -e "try { Intl.DateTimeFormat('en', { timeZone: '$TZ_VAL' }); console.log('valid'); } catch { console.log('invalid'); }"
    ```
-2. Verify by running it again (should report "Timezone OK"):
-   ```bash
-   bash ~/pai-companion/companion/patches/timezone-validate.sh
-   ```
+3. If invalid (common abbreviations like PST, EST, CST, etc.), replace it with the correct IANA ID:
+   - `PST` or `PDT` → `America/Los_Angeles`
+   - `MST` or `MDT` → `America/Denver`
+   - `CST` or `CDT` → `America/Chicago`
+   - `EST` or `EDT` → `America/New_York`
+   - If unsure, detect the system timezone via `timedatectl show -p Timezone --value` or `/etc/timezone`
+   - Update `settings.json` with the correct IANA timezone using `jq`
 
-**Verification:** The second run reports "Timezone OK: ..." with a valid IANA timezone ID. The script is idempotent and safe to run multiple times.
+**Verification:**
+```bash
+TZ_VAL=$(jq -r '.principal.timezone // empty' ~/.claude/settings.json)
+bun -e "try { Intl.DateTimeFormat('en', { timeZone: '$TZ_VAL' }); console.log('PASS ($TZ_VAL)'); } catch { console.log('FAIL ($TZ_VAL)'); }"
+```
 
 ---
 
