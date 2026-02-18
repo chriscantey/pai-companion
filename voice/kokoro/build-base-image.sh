@@ -88,7 +88,7 @@ RUN pip install --no-cache-dir huggingface_hub && \
 RUN python3 -c "\
 from huggingface_hub import snapshot_download; \
 snapshot_download('hexgrad/Kokoro-82M', \
-    allow_patterns='voices/**/*.pt', \
+    allow_patterns='voices/*.pt', \
     local_dir='/tmp/kokoro-files')" && \
     find /tmp/kokoro-files/voices -name '*.pt' -exec cp {} /app/api/src/voices/v1_0/ \; && \
     rm -rf /tmp/kokoro-files
