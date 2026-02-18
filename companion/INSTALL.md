@@ -217,37 +217,53 @@ Set up upstream reference repositories and install the latest Algorithm.
 
 3. Install the latest Algorithm from the upstream repo (never downgrade):
    ```bash
-   # Read currently installed version (from PAI v3.0)
    ALG_DIR=~/.claude/skills/PAI/Components/Algorithm
+
+   # Read currently installed version (from PAI v3.0)
    CURRENT_VER=""
    if [ -f "$ALG_DIR/LATEST" ]; then
      CURRENT_VER=$(cat "$ALG_DIR/LATEST" | sed 's/^v//')
    fi
 
-   # Find the latest version file from upstream clone
-   LATEST_ALG=$(ls ~/upstream/TheAlgorithm/versions/TheAlgorithm_v*.md 2>/dev/null | sort -V | tail -1)
-   if [ -n "$LATEST_ALG" ]; then
-     UPSTREAM_VER=$(basename "$LATEST_ALG" | sed 's/TheAlgorithm_v//;s/\.md//')
-     # Always copy the version file (makes it available)
-     cp "$LATEST_ALG" "$ALG_DIR/v${UPSTREAM_VER}.md"
+   # Find the true latest by checking BOTH upstream clone AND local versions
+   # This prevents oddly-named upstream files from confusing sort -V
+   ALL_VERSIONS=""
+   for f in ~/upstream/TheAlgorithm/versions/TheAlgorithm_v*.md "$ALG_DIR"/v*.md; do
+     [ -f "$f" ] || continue
+     ver=$(basename "$f" | sed 's/^TheAlgorithm_v//;s/^v//;s/\.md$//')
+     # Only accept clean version numbers (digits and dots)
+     if echo "$ver" | grep -qE '^[0-9]+(\.[0-9]+)*$'; then
+       ALL_VERSIONS="$ALL_VERSIONS $ver"
+     fi
+   done
 
-     # Only update LATEST if upstream is actually newer (or no version installed)
+   BEST_VER=$(printf '%s\n' $ALL_VERSIONS | sort -V | tail -1)
+
+   if [ -n "$BEST_VER" ]; then
+     # Copy upstream version file if it exists and we don't have it
+     UPSTREAM_FILE=~/upstream/TheAlgorithm/versions/TheAlgorithm_v${BEST_VER}.md
+     if [ -f "$UPSTREAM_FILE" ] && [ ! -f "$ALG_DIR/v${BEST_VER}.md" ]; then
+       cp "$UPSTREAM_FILE" "$ALG_DIR/v${BEST_VER}.md"
+     fi
+
+     # Only update LATEST if the best version is newer than what's installed
      if [ -z "$CURRENT_VER" ]; then
-       echo "v${UPSTREAM_VER}" > "$ALG_DIR/LATEST"
-       echo "Algorithm: installed v${UPSTREAM_VER} from upstream"
-     else
-       NEWER=$(printf '%s\n%s\n' "$CURRENT_VER" "$UPSTREAM_VER" | sort -V | tail -1)
-       if [ "$NEWER" = "$UPSTREAM_VER" ] && [ "$UPSTREAM_VER" != "$CURRENT_VER" ]; then
-         echo "v${UPSTREAM_VER}" > "$ALG_DIR/LATEST"
-         echo "Algorithm: upgraded from v${CURRENT_VER} to v${UPSTREAM_VER}"
+       echo "v${BEST_VER}" > "$ALG_DIR/LATEST"
+       echo "Algorithm: installed v${BEST_VER}"
+     elif [ "$BEST_VER" != "$CURRENT_VER" ]; then
+       NEWER=$(printf '%s\n%s\n' "$CURRENT_VER" "$BEST_VER" | sort -V | tail -1)
+       if [ "$NEWER" = "$BEST_VER" ]; then
+         echo "v${BEST_VER}" > "$ALG_DIR/LATEST"
+         echo "Algorithm: upgraded from v${CURRENT_VER} to v${BEST_VER}"
        else
-         echo "Algorithm: keeping v${CURRENT_VER} (upstream has v${UPSTREAM_VER})"
+         echo "Algorithm: keeping v${CURRENT_VER} (best available is v${BEST_VER})"
        fi
+     else
+       echo "Algorithm: v${CURRENT_VER} is already the latest"
      fi
    else
-     # Upstream clone had no versions — keep whatever PAI shipped with
      if [ -n "$CURRENT_VER" ]; then
-       echo "Algorithm: keeping v${CURRENT_VER} (upstream clone empty)"
+       echo "Algorithm: keeping v${CURRENT_VER} (no valid versions found upstream)"
      else
        echo "WARNING: No Algorithm version found. PAI v3.0 should have installed one."
      fi
