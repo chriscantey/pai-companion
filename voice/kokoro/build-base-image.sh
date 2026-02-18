@@ -7,7 +7,7 @@
 #   - All 67 voice files
 #   - ffmpeg for MP3 encoding
 #
-# Requirements: Docker, ~12GB free disk space during build, internet connection
+# Requirements: Docker, ~15GB free disk space during build, internet connection
 # Time: 5-15 minutes depending on connection speed
 # Final footprint: ~5GB (image + containers). Build cache cleaned automatically.
 #
