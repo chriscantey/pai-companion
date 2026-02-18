@@ -54,10 +54,12 @@ fi
 cat > "$BUILD_DIR/Dockerfile" << 'DOCKERFILE'
 FROM python:3.11-slim
 
-# System dependencies
+# System dependencies (cmake and build-essential needed for pyopenjtalk / Japanese voices)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     git \
+    cmake \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -67,7 +69,7 @@ RUN pip install --no-cache-dir \
     torch --index-url https://download.pytorch.org/whl/cpu
 
 RUN pip install --no-cache-dir \
-    kokoro>=0.8 \
+    "kokoro[ja,zh]>=0.8" \
     soundfile \
     numpy \
     ordered_set
