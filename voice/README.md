@@ -4,6 +4,8 @@ Local text-to-speech voice notifications for PAI using [Kokoro TTS](https://gith
 
 Your AI assistant speaks to you: phase announcements, task completions, alerts. Audio streams to any browser via WebSocket. No cloud APIs, no GPU required, fully local and free.
 
+Blog post: [Your AI Assistant Can Talk](https://chriscantey.com/posts/2026-02-18-your-ai-assistant-can-talk/)
+
 ## How It Works
 
 ```
@@ -57,4 +59,10 @@ The only difference: upstream uses ElevenLabs (paid API, macOS-only playback). T
 
 ## Setup
 
-See [INSTALL.md](INSTALL.md) for step-by-step setup instructions.
+Tell your AI assistant:
+
+> Read https://raw.githubusercontent.com/chriscantey/pai-companion/main/voice/INSTALL.md and follow the setup phases.
+
+Or if the repo is already cloned:
+
+> Read ~/pai-companion/voice/INSTALL.md and follow the setup phases.
