@@ -71,8 +71,8 @@ Launch the voice server and Kokoro TTS sidecar.
 # Voice server health
 curl -sf http://localhost:8888/health | python3 -c "import sys,json; d=json.load(sys.stdin); print('PASS' if d['status']=='ok' else 'FAIL')"
 
-# Kokoro sidecar health
-docker exec voice-server-kokoro curl -sf http://localhost:7880/health | python3 -c "import sys,json; d=json.load(sys.stdin); print('PASS' if d['status']=='ok' else 'FAIL')"
+# Kokoro sidecar health (no curl in container, check logs instead)
+docker logs voice-server-kokoro 2>&1 | grep -q "ready on port 7880" && echo "PASS" || echo "FAIL (check: docker logs voice-server-kokoro)"
 ```
 
 ---
