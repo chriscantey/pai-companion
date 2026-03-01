@@ -719,6 +719,135 @@ Handle the voice server based on the user's current setup.
 
 ---
 
+### Phase 9b: PAI Companion Update
+
+If the user has PAI Companion installed, offer to update the companion's system portal pages to the latest version. This phase only updates system-managed pages and never touches user-created content.
+
+**Steps:**
+
+1. Detect PAI Companion installation:
+   ```bash
+   echo "=== PAI Companion Detection ==="
+   COMPANION_DETECTED=false
+
+   # Check for portal directory with companion system pages
+   if [ -d ~/portal/skills ] || [ -d ~/portal/exchange ] || [ -d ~/portal/clipboard ]; then
+     echo "  FOUND: Portal system pages"
+     COMPANION_DETECTED=true
+   fi
+
+   # Check for companion Docker container
+   if docker ps 2>/dev/null | grep -q "pai-portal"; then
+     echo "  FOUND: pai-portal Docker container"
+     COMPANION_DETECTED=true
+   fi
+
+   # Check for companion marker in identity
+   if grep -q "PAI Companion setup" ~/.claude/PAI/USER/IDENTITY.md 2>/dev/null; then
+     echo "  FOUND: Companion identity context"
+     COMPANION_DETECTED=true
+   fi
+
+   # Check for version marker
+   if [ -f ~/portal/.companion-version ]; then
+     echo "  FOUND: Version marker ($(cat ~/portal/.companion-version))"
+     COMPANION_DETECTED=true
+   fi
+
+   echo "  Companion detected: $COMPANION_DETECTED"
+   ```
+
+2. **If not detected:** Skip this phase. Inform the user:
+   > PAI Companion is not installed. It's an optional add-on that gives your assistant a web portal for visual output, a file exchange, and a clipboard. You can install it later from [the companion repo](https://github.com/chriscantey/pai-companion).
+
+3. **If detected:** Ask the user with AskUserQuestion (3 options):
+   - **"Yes, update companion"** — Pull latest source, update system pages, rebuild Docker
+   - **"No, skip companion update"** — Leave companion as-is
+   - **"What is PAI Companion?"** — Explain what it is, then re-ask
+
+4. **If user chooses yes:** Get the latest companion source:
+   ```bash
+   if [ -d ~/pai-companion ]; then
+     echo "Updating existing companion repo..."
+     git -C ~/pai-companion pull
+   else
+     echo "Cloning companion repo..."
+     git clone https://github.com/chriscantey/pai-companion.git ~/pai-companion
+   fi
+   ```
+
+5. Update system portal pages only (never touch user-created pages):
+   ```bash
+   echo "=== Updating System Portal Pages ==="
+
+   # System directories to update (these ship with companion)
+   SYSTEM_DIRS="skills agents context system clipboard exchange shared"
+
+   for dir in $SYSTEM_DIRS; do
+     if [ -d ~/pai-companion/companion/portal/public/$dir ]; then
+       rm -rf ~/portal/$dir
+       cp -r ~/pai-companion/companion/portal/public/$dir ~/portal/
+       echo "  Updated: $dir/"
+     fi
+   done
+
+   # Welcome page (stored separately in repo)
+   if [ -d ~/pai-companion/companion/welcome ]; then
+     rm -rf ~/portal/welcome
+     cp -r ~/pai-companion/companion/welcome ~/portal/welcome
+     echo "  Updated: welcome/"
+   fi
+
+   # Server infrastructure files
+   for f in server.ts Dockerfile docker-compose.yml; do
+     if [ -f ~/pai-companion/companion/portal/$f ]; then
+       cp ~/pai-companion/companion/portal/$f ~/portal/$f
+       echo "  Updated: $f"
+     fi
+   done
+
+   # NOTE: ~/portal/index.html is NOT updated — users customize the homepage.
+   # To reset to the default homepage, manually copy:
+   #   cp ~/pai-companion/companion/portal/public/index.html ~/portal/index.html
+
+   # Write version marker
+   echo "companion-$(date +%Y%m%d)" > ~/portal/.companion-version
+   echo "  Version marker: $(cat ~/portal/.companion-version)"
+   ```
+
+6. Rebuild the Docker container:
+   ```bash
+   cd ~/portal && docker compose up -d --build
+   ```
+
+7. Wait for the container to start, then verify:
+   ```bash
+   sleep 3
+   VM_IP=$(cat ~/.vm-ip 2>/dev/null || hostname -I | awk '{print $1}')
+   PORT=$(grep PORTAL_PORT ~/.claude/.env 2>/dev/null | cut -d= -f2 || echo 8080)
+
+   echo "=== Companion Update Verification ==="
+   echo -n "Portal responds: "
+   curl -sf http://$VM_IP:$PORT/ >/dev/null && echo "PASS" || echo "FAIL"
+
+   echo -n "Skills page: "
+   curl -sf http://$VM_IP:$PORT/skills/ >/dev/null && echo "PASS" || echo "FAIL"
+
+   echo -n "Exchange page: "
+   curl -sf http://$VM_IP:$PORT/exchange/ >/dev/null && echo "PASS" || echo "FAIL"
+
+   echo -n "Docker container: "
+   docker ps | grep -q pai-portal && echo "PASS" || echo "FAIL"
+   ```
+
+**Verification:**
+- System pages are updated (skills, agents, exchange, clipboard all respond)
+- User-created portal pages are untouched (any pages the user built are still there)
+- Docker container `pai-portal` is running
+- Version marker exists: `cat ~/portal/.companion-version`
+
+---
+
 ### Phase 10: Post-Upgrade Verification
 
 Run comprehensive checks to confirm the upgrade succeeded.

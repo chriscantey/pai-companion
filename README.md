@@ -50,13 +50,23 @@ If you're migrating from PAI v3.0 to v4.0, the upgrade module walks your assista
 
 This is a one-time operation, not part of normal setup. If you're doing a fresh install, you don't need this.
 
-- **README:** [Upgrade details and supported paths](upgrade/)
+- **README:** [Upgrade details and supported paths](upgrade/UPGRADE.md)
 
 ### Quick Start
 
 Tell your AI assistant:
 
 > Read https://raw.githubusercontent.com/chriscantey/pai-companion/main/upgrade/INSTALL.md and follow the upgrade phases.
+
+---
+
+## Updating Companion
+
+Already have PAI Companion installed and want to update to the latest version? The update process refreshes system portal pages (skills catalog, agent roster, exchange, clipboard, etc.) without touching any pages you've created.
+
+Tell your AI assistant:
+
+> Read https://raw.githubusercontent.com/chriscantey/pai-companion/main/companion/UPGRADE.md and follow the update phases.
 
 ---
 

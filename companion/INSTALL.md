@@ -358,12 +358,18 @@ bun -e "try { Intl.DateTimeFormat('en', { timeZone: '$TZ_VAL' }); console.log('P
 ### Phase 11: Welcome Experience and Final Verification
 
 **Steps:**
-1. Verify the welcome page is accessible:
+1. Write the companion version marker:
+   ```bash
+   echo "companion-$(date +%Y%m%d)" > ~/portal/.companion-version
+   echo "Version marker: $(cat ~/portal/.companion-version)"
+   ```
+
+2. Verify the welcome page is accessible:
    ```bash
    curl -f http://$(cat ~/.vm-ip):8080/welcome/
    ```
 
-2. Run the full verification checklist:
+3. Run the full verification checklist:
 
 ```bash
 echo "=== PAI Companion Verification ==="
@@ -441,6 +447,10 @@ fi
 echo -n "Welcome page: "
 curl -sf http://$(cat ~/.vm-ip):8080/welcome/ >/dev/null 2>&1 && echo "PASS" || echo "FAIL"
 
+# Version marker
+echo -n "Version marker: "
+test -f ~/portal/.companion-version && echo "PASS ($(cat ~/portal/.companion-version))" || echo "FAIL"
+
 # Safety checks
 echo ""
 echo "=== Safety Checks ==="
@@ -454,7 +464,7 @@ echo ""
 echo "=== Verification Complete ==="
 ```
 
-3. Report results to the user in plain language. Show the portal URL and exchange URL prominently.
+4. Report results to the user in plain language. Show the portal URL and exchange URL prominently.
 
 **Tell the user:**
 > Setup is complete! Here's what you have:

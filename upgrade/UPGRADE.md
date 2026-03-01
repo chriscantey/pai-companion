@@ -10,7 +10,7 @@ Upgrade workflow for PAI (Personal AI Infrastructure) version migrations.
 
 ```
 upgrade/
-├── README.md              # This file
+├── UPGRADE.md             # This file
 ├── INSTALL.md             # AI-driven upgrade phases (the main deliverable)
 ├── PREREQUISITES.md       # What you need before upgrading
 ├── reference/
