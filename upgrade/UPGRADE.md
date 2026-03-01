@@ -605,6 +605,14 @@ Update settings.json to v4 structure and install the CLAUDE.md template system.
    fi
    ```
 
+9. Fix the `pai` shell alias (v3 path no longer exists in v4):
+   ```bash
+   # The v3 alias points to skills/PAI/Tools/pai.ts, which moved to PAI/Tools/pai.ts in v4
+   sed -i 's|skills/PAI/Tools/pai.ts|PAI/Tools/pai.ts|g' ~/.bashrc
+   [ -f ~/.zshrc ] && sed -i 's|skills/PAI/Tools/pai.ts|PAI/Tools/pai.ts|g' ~/.zshrc
+   echo "Shell alias path updated for v4"
+   ```
+
 **Verification:**
 - Settings.json is valid JSON: `jq empty ~/.claude/settings.json && echo "PASS"`
 - User identity preserved: `jq '.principal.name' ~/.claude/settings.json` returns the user's name
@@ -613,6 +621,7 @@ Update settings.json to v4 structure and install the CLAUDE.md template system.
 - CLAUDE.md is populated (not a stub): more than 10 lines
 - CLAUDE.md.template exists: `test -f ~/.claude/CLAUDE.md.template && echo "PASS" || echo "SKIP"`
 - Statusline reads correct paths: `grep 'PAI/Algorithm/LATEST' ~/.claude/statusline-command.sh && echo "PASS"`
+- Shell alias points to correct path: `grep 'PAI/Tools/pai.ts' ~/.bashrc | grep -v 'skills/' && echo "PASS"`
 
 ---
 
