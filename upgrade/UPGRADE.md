@@ -815,21 +815,18 @@ If the user has PAI Companion installed, offer to update the companion's system 
      fi
    done
 
-   # Patch the portal homepage (add new quick-links, update skip list)
-   # This preserves user customizations (colors, layout, etc.)
-   if [ -f ~/portal/index.html ]; then
-     # Add context link if missing (inject before system link)
-     if ! grep -q '/context/' ~/portal/index.html; then
-       sed -i '/<a href="\/system\/" class="quick-link">/i\        <a href="/context/" class="quick-link">\n          <span class="icon">\&#129517;</span> Context\n        </a>' ~/portal/index.html
-       echo "  Patched: added context quick-link"
-     fi
-
-     # Add 'context' to skip set if missing
-     if ! grep -q "'context'" ~/portal/index.html; then
-       sed -i "s/'agents', 'system'/'agents', 'context', 'system'/" ~/portal/index.html
-       echo "  Patched: added context to skip set"
-     fi
-   fi
+   # Patch the portal homepage if it still has the standard quick-links.
+   # Read ~/portal/index.html. If it contains quick-links for /skills/, /agents/,
+   # and /system/ but NOT /context/, add a context link before the system link:
+   #
+   #   <a href="/context/" class="quick-link">
+   #     <span class="icon">&#129517;</span> Context
+   #   </a>
+   #
+   # Also add 'context' to the skip Set in the JavaScript if it's missing.
+   #
+   # If the homepage doesn't have the standard quick-links structure,
+   # skip this step — the user has customized their homepage.
 
    # Update shared assets
    cp -r ~/pai-companion/companion/portal/public/shared/* ~/portal/shared/ 2>/dev/null
