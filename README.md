@@ -44,6 +44,22 @@ Tell your AI assistant:
 
 ---
 
+## Optional: Upgrade Module
+
+If you're migrating from PAI v3.0 to v4.0, the upgrade module walks your assistant through the process. It handles version detection, backup, skill migration (flat to hierarchical), hook updates, settings merge, and post-upgrade verification. Each phase is independently verifiable and resumable.
+
+This is a one-time operation, not part of normal setup. If you're doing a fresh install, you don't need this.
+
+- **README:** [Upgrade details and supported paths](upgrade/)
+
+### Quick Start
+
+Tell your AI assistant:
+
+> Read https://raw.githubusercontent.com/chriscantey/pai-companion/main/upgrade/INSTALL.md and follow the upgrade phases.
+
+---
+
 ## Links
 
 - [PAI](https://github.com/danielmiessler/PAI)
