@@ -22,7 +22,7 @@ fi
 # Commit current state
 echo "Committing current state..."
 git add -A
-git commit -m "Pre-upgrade snapshot: PAI v3.0 state before v4.0 upgrade" --allow-empty 2>/dev/null
+git commit -m "Pre-upgrade snapshot: PAI v3 state before v4 upgrade" --allow-empty 2>/dev/null
 
 # Create filesystem backup
 echo "Creating backup at: $BACKUP_DIR"

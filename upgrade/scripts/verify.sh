@@ -1,6 +1,6 @@
 #!/bin/bash
 # PAI Post-Upgrade Verification
-# Checks that the v3.0 → v4.0 upgrade completed successfully.
+# Checks that the v3 → v4 upgrade completed successfully.
 
 set -euo pipefail
 
@@ -12,7 +12,7 @@ pass() { echo "PASS"; PASS=$((PASS+1)); }
 fail() { echo "FAIL"; FAIL=$((FAIL+1)); }
 warn() { echo "WARN"; WARN=$((WARN+1)); }
 
-echo "=== PAI v3.0 → v4.0 Upgrade Verification ==="
+echo "=== PAI v3 → v4 Upgrade Verification ==="
 echo ""
 
 # Structure

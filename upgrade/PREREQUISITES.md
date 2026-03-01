@@ -4,7 +4,7 @@ Before upgrading, verify these requirements are met.
 
 ## Required
 
-- **PAI v3.0** currently installed in `~/.claude/`
+- **PAI v3** currently installed in `~/.claude/`
 - **Claude Code** installed and authenticated
 - **Bun** runtime installed
 - **Git** installed
@@ -18,14 +18,14 @@ Before upgrading, verify these requirements are met.
 ## How to Check Your Version
 
 ```bash
-# v4.0+ has this file:
+# v4+ has this file:
 cat ~/.claude/PAI/Algorithm/LATEST 2>/dev/null
 
-# v3.0 has flat skills directory (no subdirectories in skills/):
+# v3 has flat skills directory (no subdirectories in skills/):
 ls ~/.claude/skills/ | head -5
 
-# v3.0 does NOT have a PAI/ directory at the root:
-test -d ~/.claude/PAI && echo "v4.0+" || echo "v3.0 or earlier"
+# v3 does NOT have a PAI/ directory at the root:
+test -d ~/.claude/PAI && echo "v4+" || echo "v3 or earlier"
 ```
 
 ## What You Need Access To

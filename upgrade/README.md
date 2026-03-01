@@ -4,7 +4,7 @@ Upgrade workflow for PAI (Personal AI Infrastructure) version migrations.
 
 ## Status
 
-**Work in progress.** Planning and drafting the v3.0 to v4.0 upgrade workflow.
+**Work in progress.** Drafting the v3 to v4 upgrade workflow.
 
 ## Structure
 
@@ -29,7 +29,7 @@ The upgrade is AI-driven: you tell your AI assistant to read INSTALL.md and foll
 
 | From | To | Status |
 |------|----|--------|
-| v3.0 | v4 | In progress |
+| v3 | v4 | In progress |
 | v2.5 | v4 | Recommends clean install |
 
 ## Part Of

@@ -1,12 +1,12 @@
-# PAI v3.0 to v4.0 Structural Differences
+# PAI v3 to v4 Structural Differences
 
 ## Overview
 
-PAI v4.0 reorganizes 38 flat skills into 11 hierarchical categories (~77 skills), slims the hook system, adds a PAI/ documentation directory, and moves to a template-generated CLAUDE.md.
+PAI v4 reorganizes 38 flat skills into 11 hierarchical categories (~77 skills), slims the hook system, adds a PAI/ documentation directory, and moves to a template-generated CLAUDE.md.
 
 ## Skills: Flat to Hierarchical
 
-### v3.0 Upstream Skills (38 flat directories)
+### v3 Upstream Skills (38 flat directories)
 ```
 Agents, AnnualReports, Aphorisms, Apify, Art, BeCreative, BrightData,
 Browser, Cloudflare, CORE, Council, CreateCLI, CreateSkill, Documents,
@@ -16,7 +16,7 @@ Recon, RedTeam, Remotion, Research, Sales, Science, SECUpdates, Telos,
 USMetrics, WebAssessment, WorldThreatModelHarness, WriteStory
 ```
 
-### v4.0 Skill Categories (11 categories)
+### v4 Skill Categories (11 categories)
 ```
 Agents/           - Agent system (Data/, Scratchpad/, Templates/, Tools/, Workflows/)
 ContentAnalysis/   - ExtractWisdom
@@ -31,18 +31,18 @@ USMetrics/        - USMetrics (Tools/, Workflows/)
 Utilities/        - Aphorisms, AudioEditor (new), Browser, Cloudflare, CreateCLI, CreateSkill, Delegation (new), Documents, Evals, Fabric, PAIUpgrade, Parser, Prompting
 ```
 
-### Skills Removed from v4.0
+### Skills Removed from v4
 - **CORE** - Integrated into PAI core system
 - **Sales** - Removed
 - **WriteStory** - Removed
 - **PAI** (the skill) - Replaced by PAI/ directory
 
-### Skills Added in v4.0
+### Skills Added in v4
 - **AudioEditor** (Utilities/) - Audio editing
 - **Delegation** (Utilities/) - Task delegation system
 
 ### Migration Map (v3 path → v4 path)
-| v3.0 | v4.0 |
+| v3 | v4 |
 |------|------|
 | `skills/Apify/` | `skills/Scraping/Apify/` |
 | `skills/Art/` | `skills/Media/Art/` |
@@ -79,13 +79,13 @@ Utilities/        - Aphorisms, AudioEditor (new), Browser, Cloudflare, CreateCLI
 
 ## Hooks: Handler Changes
 
-### v3.0 Hook Handlers (7 files)
+### v3 Hook Handlers (7 files)
 ```
 AlgorithmEnrichment.ts, DocCrossRefIntegrity.ts, RebuildSkill.ts,
 SystemIntegrity.ts, TabState.ts, UpdateCounts.ts, VoiceNotification.ts
 ```
 
-### v4.0 Hook Handlers (6 files)
+### v4 Hook Handlers (6 files)
 ```
 BuildCLAUDE.ts, DocCrossRefIntegrity.ts, SystemIntegrity.ts,
 TabState.ts, UpdateCounts.ts, VoiceNotification.ts
@@ -100,7 +100,7 @@ TabState.ts, UpdateCounts.ts, VoiceNotification.ts
 | Kept | `DocCrossRefIntegrity.ts`, `SystemIntegrity.ts`, `TabState.ts`, `UpdateCounts.ts`, `VoiceNotification.ts` |
 
 ### Settings.json Hook Config Changes
-| v3.0 Hook | Status in v4.0 |
+| v3 Hook | Status in v4 |
 |-----------|----------------|
 | VoiceGate (PreToolUse) | **Removed** |
 | AlgorithmTracker (PostToolUse) | **Removed** |
@@ -119,7 +119,7 @@ TabState.ts, UpdateCounts.ts, VoiceNotification.ts
 
 ## New: PAI/ Directory
 
-v4.0 adds a top-level `PAI/` directory with system documentation and tools:
+v4 adds a top-level `PAI/` directory with system documentation and tools:
 
 ```
 PAI/
@@ -144,7 +144,7 @@ PAI/
 
 ## CLAUDE.md: Stub to Generated
 
-| Aspect | v3.0 | v4.0 |
+| Aspect | v3 | v4 |
 |--------|------|------|
 | Content | Stub ("This file does nothing") | Full system config (modes, algorithm reference, context routing) |
 | Generation | Static | Generated from `CLAUDE.md.template` via `BuildCLAUDE.ts` |

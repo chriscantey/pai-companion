@@ -1,19 +1,19 @@
-# PAI Upgrade: v3.0 to v4.0
+# PAI Upgrade: v3 to v4
 
 > **For AI Assistants.** If you were directed here by your user to upgrade their PAI installation, follow the phases below. Each phase is independently verifiable. If interrupted, you can resume from any phase.
 
 **Prerequisites (verify before starting):** See [PREREQUISITES.md](PREREQUISITES.md)
-- PAI v3.0 currently installed in `~/.claude/`
+- PAI v3 currently installed in `~/.claude/`
 - Claude Code installed and authenticated
 - Bun runtime installed
 - Git installed
 - At least 500MB free disk space
 - No other Claude Code sessions running
 
-**Reference material:** See [reference/v3-to-v4-diff.md](reference/v3-to-v4-diff.md) for the complete structural diff between v3.0 and v4.0.
+**Reference material:** See [reference/v3-to-v4-diff.md](reference/v3-to-v4-diff.md) for the complete structural diff between v3 and v4.
 
 **Upstream release files:** The upgrade copies files from the PAI v4 release. These should be available at either:
-- Local: `~/upstream/pai/Releases/v4.0.0/.claude/` (if the upstream repo is cloned)
+- Local: `~/upstream/pai/Releases/v4.*/.claude/` (if the upstream repo is cloned; uses the latest v4.x release)
 - Remote: The PAI GitHub releases page
 
 If the local path doesn't exist, clone the upstream repo first:
@@ -24,7 +24,7 @@ git clone https://github.com/danielmiessler/PAI.git ~/upstream/pai
 Throughout this document, `V4_SOURCE` and `V3_SOURCE` refer to the release directories:
 ```bash
 V3_SOURCE=~/upstream/pai/Releases/v3.0/.claude
-V4_SOURCE=~/upstream/pai/Releases/v4.0.0/.claude
+V4_SOURCE=$(ls -d ~/upstream/pai/Releases/v4.*/.claude 2>/dev/null | sort -V | tail -1)
 ```
 
 ---
@@ -37,29 +37,29 @@ Detect the current PAI version and validate that this upgrade path applies.
 
 1. Detect the current version:
    ```bash
-   # v4.0+ has the PAI/ directory
+   # v4+ has the PAI/ directory
    if [ -d ~/.claude/PAI ]; then
-     echo "DETECTED: v4.0+ (PAI/ directory exists)"
-     echo "This upgrade is for v3.0 → v4.0. You may already be on v4.0."
+     echo "DETECTED: v4+ (PAI/ directory exists)"
+     echo "This upgrade is for v3 → v4. You may already be on v4."
      cat ~/.claude/PAI/Algorithm/LATEST 2>/dev/null
-   # v3.0 has flat skills and no PAI/ directory
+   # v3 has flat skills and no PAI/ directory
    elif [ -d ~/.claude/skills ] && [ ! -d ~/.claude/PAI ]; then
-     # Check for v3.0 indicators: flat skill structure, specific hooks
+     # Check for v3 indicators: flat skill structure, specific hooks
      if [ -d ~/.claude/skills/CORE ] || [ -d ~/.claude/skills/BeCreative ]; then
-       echo "DETECTED: v3.0 (flat skills structure, no PAI/ directory)"
+       echo "DETECTED: v3 (flat skills structure, no PAI/ directory)"
      else
-       echo "DETECTED: Unknown version (has skills/ but not v3.0 structure)"
+       echo "DETECTED: Unknown version (has skills/ but not v3 structure)"
      fi
    else
      echo "DETECTED: No PAI installation found"
-     echo "This upgrade requires an existing v3.0 installation."
+     echo "This upgrade requires an existing v3 installation."
      echo "For a fresh install, use the PAI installer instead."
    fi
    ```
 
 2. Verify the v4 source is available:
    ```bash
-   V4_SOURCE=~/upstream/pai/Releases/v4.0.0/.claude
+   V4_SOURCE=$(ls -d ~/upstream/pai/Releases/v4.*/.claude 2>/dev/null | sort -V | tail -1)
    test -d "$V4_SOURCE/skills" && echo "v4 source: READY" || echo "v4 source: NOT FOUND"
    ```
 
@@ -77,9 +77,9 @@ Detect the current PAI version and validate that this upgrade path applies.
    echo "Git tracked: $(git -C ~/.claude rev-parse --git-dir 2>/dev/null && echo 'yes' || echo 'no')"
    ```
 
-**Verification:** Version is detected as v3.0. The v4 source directory exists. Disk space is sufficient.
+**Verification:** Version is detected as v3. The v4 source directory exists. Disk space is sufficient.
 
-**STOP if:** Version is detected as v4.0+ (already upgraded) or no PAI installation found.
+**STOP if:** Version is detected as v4+ (already upgraded) or no PAI installation found.
 
 ---
 
@@ -101,7 +101,7 @@ Create a complete backup before making any changes. This is your safety net.
 
 2. Commit current state:
    ```bash
-   cd ~/.claude && git add -A && git commit -m "Pre-upgrade snapshot: PAI v3.0 state before v4.0 upgrade" --allow-empty
+   cd ~/.claude && git add -A && git commit -m "Pre-upgrade snapshot: PAI v3 state before v4 upgrade" --allow-empty
    ```
 
 3. Create a timestamped backup:
@@ -130,17 +130,17 @@ Scan the installation to find user customizations that must be preserved.
 
 **Steps:**
 
-1. Identify custom skills (skills not in v3.0 upstream):
+1. Identify custom skills (skills not in v3 upstream):
    ```bash
    # Dynamic detection: compare against the v3.0 release directory
    V3_SOURCE=~/upstream/pai/Releases/v3.0/.claude
    if [ -d "$V3_SOURCE/skills" ]; then
      V3_UPSTREAM_SKILLS=$(ls "$V3_SOURCE/skills/" 2>/dev/null | tr '\n' ' ')
-     echo "Detection method: dynamic (from upstream v3.0 release)"
+     echo "Detection method: dynamic (from upstream v3 release)"
    else
-     # Fallback: hardcoded v3.0 upstream list (38 skills)
+     # Fallback: hardcoded v3 upstream list (38 skills)
      V3_UPSTREAM_SKILLS="Agents AnnualReports Aphorisms Apify Art BeCreative BrightData Browser Cloudflare CORE Council CreateCLI CreateSkill Documents Evals ExtractWisdom Fabric FirstPrinciples IterativeDepth OSINT PAI PAIUpgrade Parser PrivateInvestigator Prompting PromptInjection Recon RedTeam Remotion Research Sales Science SECUpdates Telos USMetrics WebAssessment WorldThreatModelHarness WriteStory"
-     echo "Detection method: fallback (hardcoded v3.0 list)"
+     echo "Detection method: fallback (hardcoded v3 list)"
    fi
 
    echo "=== Custom Skills (user-created, will be preserved) ==="
@@ -206,7 +206,7 @@ Scan the installation to find user customizations that must be preserved.
    fi
    ```
 
-4. Identify custom hooks (hooks not in the v3.0 upstream list):
+4. Identify custom hooks (hooks not in the v3 upstream list):
    ```bash
    V3_UPSTREAM_HOOKS="AlgorithmEnrichment.ts DocCrossRefIntegrity.ts RebuildSkill.ts SystemIntegrity.ts TabState.ts UpdateCounts.ts VoiceNotification.ts"
 
@@ -224,7 +224,7 @@ Scan the installation to find user customizations that must be preserved.
    # Create a manifest of everything custom
    {
      echo "# PAI Upgrade Manifest - $(date -Iseconds)"
-     echo "# Custom items to preserve during v3.0 → v4.0 upgrade"
+     echo "# Custom items to preserve during v3 → v4 upgrade"
      echo ""
      echo "## Custom Skills"
      for skill in ~/.claude/skills/*/; do
@@ -318,7 +318,19 @@ Remove v3 upstream skills and install v4 hierarchical skill structure.
 
 **Steps:**
 
-1. Remove v3 upstream skills (Custom/ is preserved):
+1. Back up user context from skills/PAI/USER/ before removing v3 skills:
+   ```bash
+   # v3 stored user context in skills/PAI/USER/
+   # This must happen BEFORE we remove v3 skills below
+   if [ -d ~/.claude/skills/PAI/USER ]; then
+     mkdir -p ~/.claude/.upgrade-user-context-backup
+     cp -r ~/.claude/skills/PAI/USER/* ~/.claude/.upgrade-user-context-backup/
+     echo "Backed up v3 user context from skills/PAI/USER/"
+     ls ~/.claude/.upgrade-user-context-backup/
+   fi
+   ```
+
+2. Remove v3 upstream skills (Custom/ is preserved):
    ```bash
    # Remove everything in skills/ EXCEPT Custom/
    # At this point, Phase 3 already moved all custom skills to Custom/
@@ -331,9 +343,9 @@ Remove v3 upstream skills and install v4 hierarchical skill structure.
    done
    ```
 
-2. Copy v4 skill categories from the release:
+3. Copy v4 skill categories from the release:
    ```bash
-   V4_SOURCE=~/upstream/pai/Releases/v4.0.0/.claude
+   V4_SOURCE=$(ls -d ~/upstream/pai/Releases/v4.*/.claude 2>/dev/null | sort -V | tail -1)
 
    for category in "$V4_SOURCE"/skills/*/; do
      cat_name=$(basename "$category")
@@ -343,7 +355,7 @@ Remove v3 upstream skills and install v4 hierarchical skill structure.
    done
    ```
 
-3. Verify the new structure:
+4. Verify the new structure:
    ```bash
    echo "=== v4 Skill Categories ==="
    for cat in ~/.claude/skills/*/; do
@@ -362,63 +374,73 @@ Remove v3 upstream skills and install v4 hierarchical skill structure.
 
 ### Phase 5: Hook Migration
 
-Update hook handlers and settings.json hook configuration.
+Update all hook files: both the root `.hook.ts` files (called by settings.json) and the `handlers/` directory.
 
 **Steps:**
 
-1. Catalog what's changing:
+1. Back up the entire hooks directory:
    ```bash
-   echo "=== Hook Handler Changes ==="
-   echo "Removing: AlgorithmEnrichment.ts, RebuildSkill.ts"
-   echo "Adding: BuildCLAUDE.ts"
-   echo "Keeping: DocCrossRefIntegrity.ts, SystemIntegrity.ts, TabState.ts, UpdateCounts.ts, VoiceNotification.ts"
+   cp -r ~/.claude/hooks ~/.claude/hooks.v3-backup
+   echo "Backed up hooks directory"
    ```
 
-2. Back up current hook handlers:
+2. Install all v4 root hook files (`.hook.ts`):
    ```bash
-   cp -r ~/.claude/hooks/handlers ~/.claude/hooks/handlers.v3-backup
-   ```
+   V4_SOURCE=$(ls -d ~/upstream/pai/Releases/v4.*/.claude 2>/dev/null | sort -V | tail -1)
 
-3. Remove v3-only handlers:
-   ```bash
-   rm -f ~/.claude/hooks/handlers/AlgorithmEnrichment.ts
-   rm -f ~/.claude/hooks/handlers/RebuildSkill.ts
-   echo "Removed v3-only handlers"
-   ```
-
-4. Install v4 hook handlers (update existing + add new):
-   ```bash
-   V4_SOURCE=~/upstream/pai/Releases/v4.0.0/.claude
-   for handler in "$V4_SOURCE"/hooks/handlers/*; do
-     handler_name=$(basename "$handler")
-     cp "$handler" ~/.claude/hooks/handlers/
-     echo "Installed: $handler_name"
+   echo "=== Installing v4 hook files ==="
+   for f in "$V4_SOURCE"/hooks/*.hook.ts; do
+     fname=$(basename "$f")
+     cp "$f" ~/.claude/hooks/
+     echo "  Installed: $fname"
    done
    ```
 
-5. Preserve any custom hook handlers the user added:
+3. Install v4 hook handlers:
    ```bash
-   # Check if user had custom handlers that weren't in v3 upstream
-   V3_UPSTREAM_HOOKS="AlgorithmEnrichment.ts DocCrossRefIntegrity.ts RebuildSkill.ts SystemIntegrity.ts TabState.ts UpdateCounts.ts VoiceNotification.ts"
-   V4_HOOKS="BuildCLAUDE.ts DocCrossRefIntegrity.ts SystemIntegrity.ts TabState.ts UpdateCounts.ts VoiceNotification.ts"
+   V4_SOURCE=$(ls -d ~/upstream/pai/Releases/v4.*/.claude 2>/dev/null | sort -V | tail -1)
 
-   for hook in ~/.claude/hooks/handlers.v3-backup/*; do
-     hook_name=$(basename "$hook")
-     if ! echo "$V3_UPSTREAM_HOOKS $V4_HOOKS" | grep -qw "$hook_name"; then
-       echo "Restoring custom hook: $hook_name"
-       cp "$hook" ~/.claude/hooks/handlers/
-     fi
+   for handler in "$V4_SOURCE"/hooks/handlers/*; do
+     handler_name=$(basename "$handler")
+     cp "$handler" ~/.claude/hooks/handlers/
+     echo "  Installed handler: $handler_name"
+   done
+   ```
+
+4. Install v4 hook lib files:
+   ```bash
+   V4_SOURCE=$(ls -d ~/upstream/pai/Releases/v4.*/.claude 2>/dev/null | sort -V | tail -1)
+
+   if [ -d "$V4_SOURCE/hooks/lib" ]; then
+     cp -r "$V4_SOURCE/hooks/lib/"* ~/.claude/hooks/lib/ 2>/dev/null
+     echo "  Updated hooks/lib"
+   fi
+   ```
+
+5. Remove v3-only hook files that no longer exist in v4:
+   ```bash
+   V3_ONLY_HOOKS="AlgorithmTracker.hook.ts AutoWorkCreation.hook.ts CheckVersion.hook.ts SessionSummary.hook.ts StartupGreeting.hook.ts StopOrchestrator.hook.ts VoiceGate.hook.ts"
+   V3_ONLY_HANDLERS="AlgorithmEnrichment.ts RebuildSkill.ts"
+
+   echo "=== Removing v3-only hooks ==="
+   for f in $V3_ONLY_HOOKS; do
+     rm -f ~/.claude/hooks/"$f"
+     echo "  Removed: $f"
+   done
+
+   for f in $V3_ONLY_HANDLERS; do
+     rm -f ~/.claude/hooks/handlers/"$f"
+     echo "  Removed handler: $f"
    done
    ```
 
 6. The settings.json hook configuration will be updated in Phase 7 (Settings Migration).
 
 **Verification:**
-- `AlgorithmEnrichment.ts` and `RebuildSkill.ts` no longer exist in handlers/
-- `BuildCLAUDE.ts` exists in handlers/
-- All v4 handlers present: `ls ~/.claude/hooks/handlers/`
-- Custom hooks preserved (check against manifest)
-- Backup exists: `test -d ~/.claude/hooks/handlers.v3-backup && echo "PASS" || echo "FAIL"`
+- V4 hooks present: `ls ~/.claude/hooks/*.hook.ts | wc -l` (should be ~20)
+- V3-only hooks gone: `test -f ~/.claude/hooks/AlgorithmTracker.hook.ts && echo "FAIL" || echo "PASS"`
+- `BuildCLAUDE.ts` exists in handlers/: `test -f ~/.claude/hooks/handlers/BuildCLAUDE.ts && echo "PASS"`
+- Backup exists: `test -d ~/.claude/hooks.v3-backup && echo "PASS"`
 
 ---
 
@@ -428,25 +450,14 @@ Create the new PAI/ directory with documentation, tools, and user context struct
 
 **Steps:**
 
-1. Back up any existing PAI-related user files from v3:
+1. Copy the PAI/ directory from v4 release (user context was already backed up in Phase 4):
    ```bash
-   # v3 stored user context in skills/PAI/USER/
-   if [ -d ~/.claude/skills/PAI/USER ]; then
-     mkdir -p ~/.claude/.upgrade-user-context-backup
-     cp -r ~/.claude/skills/PAI/USER/* ~/.claude/.upgrade-user-context-backup/
-     echo "Backed up v3 user context from skills/PAI/USER/"
-     ls ~/.claude/.upgrade-user-context-backup/
-   fi
-   ```
-
-2. Copy the PAI/ directory from v4 release:
-   ```bash
-   V4_SOURCE=~/upstream/pai/Releases/v4.0.0/.claude
+   V4_SOURCE=$(ls -d ~/upstream/pai/Releases/v4.*/.claude 2>/dev/null | sort -V | tail -1)
    cp -r "$V4_SOURCE/PAI" ~/.claude/PAI
    echo "Installed PAI/ directory"
    ```
 
-3. Restore user context files to the new PAI/USER/ location:
+2. Restore user context files to the new PAI/USER/ location:
    ```bash
    if [ -d ~/.claude/.upgrade-user-context-backup ]; then
      echo "=== Restoring User Context ==="
@@ -457,7 +468,7 @@ Create the new PAI/ directory with documentation, tools, and user context struct
          echo "Merging: $fname (v4 base + your customizations)"
          echo "" >> ~/.claude/PAI/USER/"$fname"
          echo "---" >> ~/.claude/PAI/USER/"$fname"
-         echo "<!-- Restored from v3.0 upgrade -->" >> ~/.claude/PAI/USER/"$fname"
+         echo "<!-- Restored from v3 upgrade -->" >> ~/.claude/PAI/USER/"$fname"
          cat "$f" >> ~/.claude/PAI/USER/"$fname"
        else
          # User file doesn't exist in v4. Copy it directly
@@ -468,7 +479,7 @@ Create the new PAI/ directory with documentation, tools, and user context struct
    fi
    ```
 
-4. Create required subdirectories if they don't exist:
+3. Create required subdirectories if they don't exist:
    ```bash
    mkdir -p ~/.claude/PAI/USER/SKILLCUSTOMIZATIONS
    mkdir -p ~/.claude/PAI/USER/TELOS
@@ -505,7 +516,7 @@ Update settings.json to v4 structure and install the CLAUDE.md template system.
 
 2. Copy v4 settings.json template:
    ```bash
-   V4_SOURCE=~/upstream/pai/Releases/v4.0.0/.claude
+   V4_SOURCE=$(ls -d ~/upstream/pai/Releases/v4.*/.claude 2>/dev/null | sort -V | tail -1)
    cp ~/.claude/settings.json ~/.claude/settings.json.v3-backup
    cp "$V4_SOURCE/settings.json" ~/.claude/settings.json
    echo "Installed v4 settings.json template"
@@ -528,7 +539,16 @@ Update settings.json to v4 structure and install the CLAUDE.md template system.
    echo "Merged user identity into v4 settings"
    ```
 
-4. Validate the merged settings:
+4. Set version fields (the v4 template has these as null):
+   ```bash
+   ALGO_VER=$(cat ~/.claude/PAI/Algorithm/LATEST 2>/dev/null | tr -d '[:space:]')
+   jq --arg alg "$ALGO_VER" '.paiVersion = "4.0" | .algorithmVersion = $alg' \
+     ~/.claude/settings.json > /tmp/settings-versions.json
+   mv /tmp/settings-versions.json ~/.claude/settings.json
+   echo "Set paiVersion=4.0, algorithmVersion=$ALGO_VER"
+   ```
+
+5. Validate the merged settings:
    ```bash
    # Check it's valid JSON
    jq empty ~/.claude/settings.json 2>/dev/null && echo "JSON: valid" || echo "JSON: INVALID"
@@ -537,11 +557,13 @@ Update settings.json to v4 structure and install the CLAUDE.md template system.
    echo "Principal: $(jq -r '.principal.name' ~/.claude/settings.json)"
    echo "AI Name: $(jq -r '.daidentity.name' ~/.claude/settings.json)"
    echo "Timezone: $(jq -r '.principal.timezone' ~/.claude/settings.json)"
+   echo "PAI Version: $(jq -r '.paiVersion' ~/.claude/settings.json)"
+   echo "Algorithm: $(jq -r '.algorithmVersion' ~/.claude/settings.json)"
    ```
 
-5. Install CLAUDE.md template system:
+6. Install CLAUDE.md template system:
    ```bash
-   V4_SOURCE=~/upstream/pai/Releases/v4.0.0/.claude
+   V4_SOURCE=$(ls -d ~/upstream/pai/Releases/v4.*/.claude 2>/dev/null | sort -V | tail -1)
 
    # Back up existing CLAUDE.md
    cp ~/.claude/CLAUDE.md ~/.claude/CLAUDE.md.v3-backup 2>/dev/null
@@ -560,7 +582,7 @@ Update settings.json to v4 structure and install the CLAUDE.md template system.
    fi
    ```
 
-6. Verify CLAUDE.md has content (not a stub):
+7. Verify CLAUDE.md has content (not a stub):
    ```bash
    LINES=$(wc -l < ~/.claude/CLAUDE.md)
    if [ "$LINES" -gt 10 ]; then
@@ -570,12 +592,27 @@ Update settings.json to v4 structure and install the CLAUDE.md template system.
    fi
    ```
 
+8. Fix statusline paths (v3 statusline reads from old locations):
+   ```bash
+   if [ -f ~/.claude/statusline-command.sh ]; then
+     # Fix Algorithm LATEST path: skills/PAI/Components/Algorithm/ → PAI/Algorithm/
+     sed -i 's|skills/PAI/Components/Algorithm/LATEST|PAI/Algorithm/LATEST|g' ~/.claude/statusline-command.sh
+
+     # Fix PAI version field: .pai.version → .paiVersion
+     sed -i 's|\.pai\.version|.paiVersion|g' ~/.claude/statusline-command.sh
+
+     echo "Statusline paths updated for v4"
+   fi
+   ```
+
 **Verification:**
 - Settings.json is valid JSON: `jq empty ~/.claude/settings.json && echo "PASS"`
 - User identity preserved: `jq '.principal.name' ~/.claude/settings.json` returns the user's name
+- Version fields set: `jq '{paiVersion, algorithmVersion}' ~/.claude/settings.json`
 - v3 backup exists: `test -f ~/.claude/settings.json.v3-backup && echo "PASS"`
 - CLAUDE.md is populated (not a stub): more than 10 lines
 - CLAUDE.md.template exists: `test -f ~/.claude/CLAUDE.md.template && echo "PASS" || echo "SKIP"`
+- Statusline reads correct paths: `grep 'PAI/Algorithm/LATEST' ~/.claude/statusline-command.sh && echo "PASS"`
 
 ---
 
@@ -587,7 +624,7 @@ Update agent configurations and ensure memory directories are correct.
 
 1. Install v4 agent configurations:
    ```bash
-   V4_SOURCE=~/upstream/pai/Releases/v4.0.0/.claude
+   V4_SOURCE=$(ls -d ~/upstream/pai/Releases/v4.*/.claude 2>/dev/null | sort -V | tail -1)
 
    # Back up current agents
    cp -r ~/.claude/agents ~/.claude/agents.v3-backup 2>/dev/null
@@ -615,7 +652,7 @@ Update agent configurations and ensure memory directories are correct.
 
 4. Install other v4 infrastructure if present:
    ```bash
-   V4_SOURCE=~/upstream/pai/Releases/v4.0.0/.claude
+   V4_SOURCE=$(ls -d ~/upstream/pai/Releases/v4.*/.claude 2>/dev/null | sort -V | tail -1)
 
    # Install lib/ directory (migration utilities)
    [ -d "$V4_SOURCE/lib" ] && cp -r "$V4_SOURCE/lib" ~/.claude/
@@ -662,7 +699,7 @@ Handle the voice server based on the user's current setup.
 
 2. **If upstream ElevenLabs (not Companion):** Update the VoiceServer:
    ```bash
-   V4_SOURCE=~/upstream/pai/Releases/v4.0.0/.claude
+   V4_SOURCE=$(ls -d ~/upstream/pai/Releases/v4.*/.claude 2>/dev/null | sort -V | tail -1)
    if [ -d "$V4_SOURCE/VoiceServer" ]; then
      cp -r ~/.claude/VoiceServer ~/.claude/VoiceServer.v3-backup 2>/dev/null
      cp -r "$V4_SOURCE/VoiceServer" ~/.claude/
@@ -690,7 +727,7 @@ Run comprehensive checks to confirm the upgrade succeeded.
 
 1. Run the full verification:
    ```bash
-   echo "=== PAI v3.0 → v4.0 Upgrade Verification ==="
+   echo "=== PAI v3 → v4 Upgrade Verification ==="
    echo ""
    PASS=0
    FAIL=0
@@ -807,8 +844,9 @@ Clean up temporary files and commit the upgraded state.
    ```bash
    echo "=== Shell Alias Cleanup ==="
 
-   # Determine the correct alias (v4 uses the same path as v3)
-   PAI_TOOL="$HOME/.claude/skills/PAI/Tools/pai.ts"
+   # Determine the correct alias path for v4
+   # v3 used skills/PAI/Tools/pai.ts, v4 uses PAI/Tools/pai.ts
+   PAI_TOOL="$HOME/.claude/PAI/Tools/pai.ts"
    CORRECT_ALIAS="alias pai='bun $PAI_TOOL'"
 
    for RC_FILE in ~/.bashrc ~/.zshrc; do
@@ -891,7 +929,7 @@ Clean up temporary files and commit the upgraded state.
 
 3. Commit the upgraded state:
    ```bash
-   cd ~/.claude && git add -A && git commit -m "Upgrade complete: PAI v3.0 → v4.0"
+   cd ~/.claude && git add -A && git commit -m "Upgrade complete: PAI v3 → v4"
    ```
 
 4. Report to the user:
@@ -905,11 +943,14 @@ Clean up temporary files and commit the upgraded state.
    - CLAUDE.md: Now generated from template (auto-rebuilds on session start)
    - Settings: Your identity, timezone, and API keys are preserved
    - Memory: All session history, learning, and relationship data intact
-   - Algorithm: Updated to v3.5.0
+   - Algorithm: Updated to latest version
 
    Full backup at: ~/pai-v3-backup-[timestamp]/
 
-   Restart Claude Code to pick up the new configuration.
+   **Important:** Exit Claude Code and start a new session. The v4 hooks
+   and configuration won't fully load until you restart. You may see hook
+   errors on exit — that's expected, since the current session is still
+   running with v3 hook references. A fresh session will load cleanly.
    ```
 
 **Verification:**
@@ -932,7 +973,7 @@ echo "Restoring from: $BACKUP"
 cd ~/.claude && git stash
 rm -rf skills/ hooks/ PAI/ CLAUDE.md CLAUDE.md.template settings.json agents/ VoiceServer/ lib/ PAI-Install/
 cp -r "$BACKUP"/* ~/.claude/
-cd ~/.claude && git add -A && git commit -m "Rollback: restored v3.0 from backup"
+cd ~/.claude && git add -A && git commit -m "Rollback: restored v3 from backup"
 ```
 
 Or use git:
@@ -943,5 +984,5 @@ git -C ~/.claude log --oneline | head -5
 
 # Reset to the pre-upgrade state
 git -C ~/.claude checkout <commit-hash> -- .
-git -C ~/.claude commit -m "Rollback: reverted to v3.0 via git"
+git -C ~/.claude commit -m "Rollback: reverted to v3 via git"
 ```
