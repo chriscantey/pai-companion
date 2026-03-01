@@ -815,9 +815,21 @@ If the user has PAI Companion installed, offer to update the companion's system 
      fi
    done
 
-   # Update the portal homepage (quick-links bar, skip list)
-   cp ~/pai-companion/companion/portal/public/index.html ~/portal/index.html
-   echo "  Updated: index.html"
+   # Patch the portal homepage (add new quick-links, update skip list)
+   # This preserves user customizations (colors, layout, etc.)
+   if [ -f ~/portal/index.html ]; then
+     # Add context link if missing (inject before system link)
+     if ! grep -q '/context/' ~/portal/index.html; then
+       sed -i '/<a href="\/system\/" class="quick-link">/i\        <a href="/context/" class="quick-link">\n          <span class="icon">\&#129517;</span> Context\n        </a>' ~/portal/index.html
+       echo "  Patched: added context quick-link"
+     fi
+
+     # Add 'context' to skip set if missing
+     if ! grep -q "'context'" ~/portal/index.html; then
+       sed -i "s/'agents', 'system'/'agents', 'context', 'system'/" ~/portal/index.html
+       echo "  Patched: added context to skip set"
+     fi
+   fi
 
    # Update shared assets
    cp -r ~/pai-companion/companion/portal/public/shared/* ~/portal/shared/ 2>/dev/null
