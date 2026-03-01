@@ -55,8 +55,18 @@ sudo usermod -aG docker $USER
 
 ```bash
 git clone https://github.com/danielmiessler/PAI.git
-cp -r PAI/Releases/v4.0.0/.claude ~/
+cp -r PAI/Releases/$(ls PAI/Releases/ | sort -V | tail -1)/.claude ~/
 cd ~/.claude && sed -i 's/--mode gui/--mode cli/' install.sh && bash install.sh
+```
+
+### Step 6: Fix shell configuration
+
+The PAI installer writes to `.zshrc` (macOS default), but Linux uses bash. These commands merge the config and fix a known path issue in the current release:
+
+```bash
+[ -f ~/.zshrc ] && cat ~/.zshrc >> ~/.bashrc
+sed -i 's|skills/PAI/Tools/pai.ts|PAI/Tools/pai.ts|g' ~/.bashrc
+source ~/.bashrc
 ```
 
 ### Verify
