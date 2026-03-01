@@ -12,7 +12,7 @@
 
 **Reference material:** See [reference/v3-to-v4-diff.md](reference/v3-to-v4-diff.md) for the complete structural diff between v3.0 and v4.0.
 
-**Upstream release files:** The upgrade copies files from the PAI v4.0.0 release. These should be available at either:
+**Upstream release files:** The upgrade copies files from the PAI v4 release. These should be available at either:
 - Local: `~/upstream/pai/Releases/v4.0.0/.claude/` (if the upstream repo is cloned)
 - Remote: The PAI GitHub releases page
 

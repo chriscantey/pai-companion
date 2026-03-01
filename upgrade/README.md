@@ -29,9 +29,8 @@ The upgrade is AI-driven: you tell your AI assistant to read INSTALL.md and foll
 
 | From | To | Status |
 |------|----|--------|
-| v3.0 | v4.0 | In progress |
-| v4.0.0 | v4.0.1 | Planned |
-| v2.5 | v4.0 | Recommends clean install |
+| v3.0 | v4 | In progress |
+| v2.5 | v4 | Recommends clean install |
 
 ## Part Of
 
