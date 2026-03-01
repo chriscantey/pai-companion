@@ -160,6 +160,9 @@
         <a href="/agents/" class="quick-link">
           <span class="icon">&#129302;</span> Agents
         </a>
+        <a href="/context/" class="quick-link">
+          <span class="icon">&#128218;</span> Context
+        </a>
         <a href="/system/" class="quick-link">
           <span class="icon">&#9881;&#65039;</span> System
         </a>
@@ -185,7 +188,7 @@
         const items = await res.json();
 
         // Filter out system directories
-        const skip = new Set(['clipboard', 'exchange', 'welcome', 'skills', 'agents', 'system', 'shared', '.thumbs']);
+        const skip = new Set(['clipboard', 'exchange', 'welcome', 'skills', 'agents', 'context', 'system', 'shared', '.thumbs']);
         const filtered = items.filter(i => !skip.has(i.name));
 
         if (filtered.length === 0) {
