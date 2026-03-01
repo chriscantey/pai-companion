@@ -8,7 +8,7 @@
 - Bun runtime
 - Claude Code installed and authenticated
 - Docker installed and working without sudo
-- PAI v3.0 installed
+- PAI v4.0 installed
 
 **Where are the companion files?** Either cloned to `~/pai-companion/` or available at the GitHub raw URL. Read files from whichever location your user directed you to.
 
@@ -160,7 +160,7 @@ You will need to replace `{VM_IP}` with the actual IP in the content below.
 
 **Step 6a: Append to identity file**
 
-Read `~/pai-companion/companion/context/identity-additions.md`, replace all `{VM_IP}` with the actual VM IP, and append the result to `~/.claude/skills/PAI/USER/IDENTITY.md`.
+Read `~/pai-companion/companion/context/identity-additions.md`, replace all `{VM_IP}` with the actual VM IP, and append the result to `~/.claude/PAI/USER/IDENTITY.md`.
 
 If `IDENTITY.md` does not exist, create it. (Fresh PAI installs may only have `DAIDENTITY.md`.) If it does exist, do NOT overwrite — append with a clear separator:
 ```
@@ -170,22 +170,22 @@ If `IDENTITY.md` does not exist, create it. (Fresh PAI installs may only have `D
 
 **Step 6b: Append to steering rules**
 
-Read `~/pai-companion/companion/context/steering-rules.md`, replace all `{VM_IP}` with the actual VM IP, and append the result to `~/.claude/skills/PAI/USER/AISTEERINGRULES.md`.
+Read `~/pai-companion/companion/context/steering-rules.md`, replace all `{VM_IP}` with the actual VM IP, and append the result to `~/.claude/PAI/USER/AISTEERINGRULES.md`.
 
 Do NOT overwrite the existing content. Append with a clear separator.
 
 **Step 6c: Create design system file**
 
-Copy `~/pai-companion/companion/context/design-system.md` to `~/.claude/skills/PAI/USER/DESIGN.md`.
+Copy `~/pai-companion/companion/context/design-system.md` to `~/.claude/PAI/USER/DESIGN.md`.
 
 **Step 6d: Update settings.json contextFiles**
 
 Ensure `~/.claude/settings.json` includes `DESIGN.md` in the `contextFiles` array. Read the current settings.json, and if `USER/DESIGN.md` is not already in `contextFiles`, add it. Use `jq` or careful JSON editing. Do not break the existing settings.
 
 **Verification:**
-- `grep "VM_IP" ~/.claude/skills/PAI/USER/IDENTITY.md` should NOT match (all {VM_IP} replaced with actual IP)
-- `grep -i "Visual-first" ~/.claude/skills/PAI/USER/AISTEERINGRULES.md` should match
-- `test -f ~/.claude/skills/PAI/USER/DESIGN.md` should succeed
+- `grep "VM_IP" ~/.claude/PAI/USER/IDENTITY.md` should NOT match (all {VM_IP} replaced with actual IP)
+- `grep -i "Visual-first" ~/.claude/PAI/USER/AISTEERINGRULES.md` should match
+- `test -f ~/.claude/PAI/USER/DESIGN.md` should succeed
 - The actual VM IP should appear in the identity and steering rules files
 
 ---
@@ -194,7 +194,7 @@ Ensure `~/.claude/settings.json` includes `DESIGN.md` in the `contextFiles` arra
 
 This was included in the design system file (Phase 6c). The methodology section in `DESIGN.md` teaches the assistant how to create styled HTML pages.
 
-**Verification:** `grep "Document Creation" ~/.claude/skills/PAI/USER/DESIGN.md` returns a match.
+**Verification:** `grep "Document Creation" ~/.claude/PAI/USER/DESIGN.md` returns a match.
 
 ---
 
@@ -217,9 +217,9 @@ Set up upstream reference repositories and install the latest Algorithm.
 
 3. Install the latest Algorithm from the upstream repo (never downgrade):
    ```bash
-   ALG_DIR=~/.claude/skills/PAI/Components/Algorithm
+   ALG_DIR=~/.claude/PAI/Algorithm
 
-   # Read currently installed version (from PAI v3.0)
+   # Read currently installed version (from PAI v4.0)
    CURRENT_VER=""
    if [ -f "$ALG_DIR/LATEST" ]; then
      CURRENT_VER=$(cat "$ALG_DIR/LATEST" | sed 's/^v//')
@@ -265,20 +265,20 @@ Set up upstream reference repositories and install the latest Algorithm.
      if [ -n "$CURRENT_VER" ]; then
        echo "Algorithm: keeping v${CURRENT_VER} (no valid versions found upstream)"
      else
-       echo "WARNING: No Algorithm version found. PAI v3.0 should have installed one."
+       echo "WARNING: No Algorithm version found. PAI v4.0 should have installed one."
      fi
    fi
    ```
 
 4. Rebuild the dynamic core (if the build tool exists):
    ```bash
-   [ -f ~/.claude/skills/PAI/Tools/CreateDynamicCore.ts ] && bun ~/.claude/skills/PAI/Tools/CreateDynamicCore.ts
+   [ -f ~/.claude/PAI/Tools/BuildCLAUDE.ts ] && bun ~/.claude/PAI/Tools/BuildCLAUDE.ts
    ```
 
 **Verification:**
 - `git -C ~/upstream/pai log --oneline -1` shows a recent commit
 - `git -C ~/upstream/TheAlgorithm log --oneline -1` shows a recent commit
-- `cat ~/.claude/skills/PAI/Components/Algorithm/LATEST` shows a version (e.g. `v1.6.0`) — never lower than what PAI shipped with
+- `cat ~/.claude/PAI/Algorithm/LATEST` shows a version (e.g. `v1.6.0`) — never lower than what PAI shipped with
 - `test -f ~/.claude/skills/PAI/SKILL.md` succeeds (dynamic core rebuilt)
 
 ---
@@ -395,17 +395,17 @@ curl -sf http://$(cat ~/.vm-ip):8080/exchange/ >/dev/null 2>&1 && echo "PASS" ||
 
 # Phase 6
 echo -n "Steering rules installed: "
-grep -qi "Visual-first" ~/.claude/skills/PAI/USER/AISTEERINGRULES.md 2>/dev/null && echo "PASS" || echo "FAIL"
+grep -qi "Visual-first" ~/.claude/PAI/USER/AISTEERINGRULES.md 2>/dev/null && echo "PASS" || echo "FAIL"
 
 echo -n "Design system installed: "
-test -f ~/.claude/skills/PAI/USER/DESIGN.md && echo "PASS" || echo "FAIL"
+test -f ~/.claude/PAI/USER/DESIGN.md && echo "PASS" || echo "FAIL"
 
 echo -n "Identity updated: "
-grep -q "Portal" ~/.claude/skills/PAI/USER/IDENTITY.md 2>/dev/null && echo "PASS" || echo "FAIL"
+grep -q "Portal" ~/.claude/PAI/USER/IDENTITY.md 2>/dev/null && echo "PASS" || echo "FAIL"
 
 # Phase 7
 echo -n "Design methodology: "
-grep -q "Document Creation" ~/.claude/skills/PAI/USER/DESIGN.md 2>/dev/null && echo "PASS" || echo "FAIL"
+grep -q "Document Creation" ~/.claude/PAI/USER/DESIGN.md 2>/dev/null && echo "PASS" || echo "FAIL"
 
 # Phase 8
 echo -n "Upstream PAI: "
@@ -415,7 +415,7 @@ echo -n "Upstream Algorithm: "
 git -C ~/upstream/TheAlgorithm log --oneline -1 >/dev/null 2>&1 && echo "PASS" || echo "FAIL"
 
 echo -n "Algorithm installed: "
-test -s ~/.claude/skills/PAI/Components/Algorithm/LATEST && echo "PASS ($(cat ~/.claude/skills/PAI/Components/Algorithm/LATEST))" || echo "FAIL"
+test -s ~/.claude/PAI/Algorithm/LATEST && echo "PASS ($(cat ~/.claude/PAI/Algorithm/LATEST))" || echo "FAIL"
 
 # Phase 9
 echo -n "Git tracking (.claude): "
@@ -445,7 +445,7 @@ curl -sf http://$(cat ~/.vm-ip):8080/welcome/ >/dev/null 2>&1 && echo "PASS" || 
 echo ""
 echo "=== Safety Checks ==="
 echo -n "No localhost in identity: "
-grep -q "http://localhost" ~/.claude/skills/PAI/USER/IDENTITY.md 2>/dev/null && echo "FAIL (found localhost URL)" || echo "PASS"
+grep -q "http://localhost" ~/.claude/PAI/USER/IDENTITY.md 2>/dev/null && echo "FAIL (found localhost URL)" || echo "PASS"
 
 echo -n "Docker container running: "
 docker ps 2>/dev/null | grep -q "portal" && echo "PASS" || echo "FAIL"

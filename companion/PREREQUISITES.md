@@ -51,12 +51,12 @@ sudo usermod -aG docker $USER
 
 **Important:** Log out and back in (or reboot) after adding yourself to the docker group. The next step won't work until you do.
 
-### Step 5: PAI v3.0
+### Step 5: PAI v4.0
 
 ```bash
 git clone https://github.com/danielmiessler/PAI.git
-cp -r PAI/Releases/v3.0/.claude ~/
-cd ~/.claude && bash install.sh
+cp -r PAI/Releases/v4.0.0/.claude ~/
+cd ~/.claude && sed -i 's/--mode gui/--mode cli/' install.sh && bash install.sh
 ```
 
 ### Verify
@@ -68,7 +68,7 @@ which git curl bun claude
 docker run --rm hello-world && docker rmi hello-world
 docker compose version
 claude --version
-cat ~/.claude/skills/PAI/SKILL.md | head -5
+cat ~/.claude/PAI/SKILL.md | head -5
 ```
 
 All commands should succeed. If any fail, revisit the corresponding step above.
