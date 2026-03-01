@@ -815,9 +815,13 @@ If the user has PAI Companion installed, offer to update the companion's system 
      fi
    done
 
-   # NOTE: ~/portal/index.html is NOT updated — users customize the homepage.
-   # To reset to the default homepage, manually copy:
-   #   cp ~/pai-companion/companion/portal/public/index.html ~/portal/index.html
+   # Update the portal homepage (quick-links bar, skip list)
+   cp ~/pai-companion/companion/portal/public/index.html ~/portal/index.html
+   echo "  Updated: index.html"
+
+   # Update shared assets
+   cp -r ~/pai-companion/companion/portal/public/shared/* ~/portal/shared/ 2>/dev/null
+   echo "  Updated: shared/"
 
    # Write version marker
    echo "companion-$(date +%Y%m%d)" > ~/portal/.companion-version

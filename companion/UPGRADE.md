@@ -123,9 +123,11 @@ Replace system-managed portal pages with the latest versions. User-created pages
    done
    ```
 
-4. Note: The portal homepage (`~/portal/index.html`) is NOT updated automatically because users customize it. To reset to the default homepage, manually copy:
+4. Update the portal homepage and shared assets:
    ```bash
    cp ~/pai-companion/companion/portal/public/index.html ~/portal/index.html
+   cp -r ~/pai-companion/companion/portal/public/shared/* ~/portal/shared/ 2>/dev/null
+   echo "  Updated: index.html, shared/"
    ```
 
 **Verification:** System directories in `~/portal/` have been refreshed. User directories are untouched (compare against the inventory from Phase 1).
