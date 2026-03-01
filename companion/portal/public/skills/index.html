@@ -108,6 +108,30 @@
       color: var(--text-muted);
       margin-top: 0.5rem;
     }
+    .sub-count {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 0.1rem 0.45rem;
+      border-radius: 4px;
+      font-weight: 600;
+      background: rgba(196, 113, 237, 0.15);
+      color: var(--purple);
+      margin-left: 0.4rem;
+      vertical-align: middle;
+    }
+    .source-badge {
+      display: inline-block;
+      font-size: 0.65rem;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.5rem;
+      vertical-align: middle;
+    }
+    .source-upstream { background: rgba(18, 194, 233, 0.15); color: var(--cyan); }
+    .source-custom { background: rgba(255, 107, 157, 0.15); color: var(--pink); }
     .empty {
       text-align: center;
       padding: 3rem;
@@ -156,11 +180,27 @@
       padding-bottom: 1rem;
       border-bottom: 1px solid var(--border);
     }
+    .modal-header-left {
+      display: flex;
+      align-items: center;
+    }
     .modal-title {
       font-size: 1.5rem;
       font-weight: 700;
       color: var(--cyan);
     }
+    .modal-back {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      cursor: pointer;
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      transition: all 0.15s;
+      margin-right: 0.75rem;
+    }
+    .modal-back:hover { color: var(--cyan); background: rgba(18, 194, 233, 0.08); }
     .modal-close {
       background: var(--bg-secondary);
       border: 1px solid var(--border);
@@ -199,6 +239,41 @@
     .modal-files-list .file-name { color: var(--cyan); }
     .modal-files-list .file-workflow { color: var(--purple); }
     .modal-files-list .file-tool { color: var(--teal); }
+
+    /* Sub-skill cards inside modal */
+    .modal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 0.75rem;
+    }
+    .modal-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .modal-card:hover {
+      background: var(--bg-tertiary);
+      border-color: rgba(18, 194, 233, 0.3);
+      transform: translateY(-1px);
+    }
+    .modal-card-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--cyan);
+      margin-bottom: 0.3rem;
+    }
+    .modal-card-desc {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
 
     /* Rendered markdown styling */
     .md-content {
@@ -293,7 +368,7 @@
 
     <header>
       <h1>Skills Catalog <span class="count-badge" id="count">...</span></h1>
-      <p>Everything your AI assistant can do. Click any skill to see its full definition and learn how it works.</p>
+      <p>All PAI skills and sub-skills. Click a category to explore, then click a sub-skill for its full definition.</p>
     </header>
 
     <input type="text" class="search" id="search" placeholder="Filter skills..." autofocus>
@@ -311,7 +386,10 @@
   <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
     <div class="modal-panel" id="modal-panel">
       <div class="modal-header">
-        <div class="modal-title" id="modal-title">Skill</div>
+        <div class="modal-header-left">
+          <button class="modal-back" id="modal-back" onclick="goBack()" style="display:none">&larr; Back</button>
+          <div class="modal-title" id="modal-title">Skill</div>
+        </div>
         <button class="modal-close" onclick="closeModal()">Esc</button>
       </div>
       <div id="modal-files"></div>
@@ -321,13 +399,19 @@
 
   <script>
     let allSkills = [];
+    let modalHistory = [];
 
     async function loadSkills() {
       const container = document.getElementById('listing');
       try {
         const res = await fetch('/api/skills');
         allSkills = await res.json();
-        document.getElementById('count').textContent = allSkills.length;
+        // Count total sub-skills across all categories
+        let total = 0;
+        for (const s of allSkills) {
+          total += s.subSkills && s.subSkills.length > 0 ? s.subSkills.length : 1;
+        }
+        document.getElementById('count').textContent = total;
         renderSkills(allSkills);
       } catch (e) {
         container.innerHTML = '<div class="empty"><p>Could not load skills.</p></div>';
@@ -345,32 +429,80 @@
       for (const skill of skills) {
         const card = document.createElement('div');
         card.className = 'card';
-        card.onclick = () => openSkill(skill.name);
+        card.onclick = () => openCategory(skill);
+        const sourceBadge = skill.source === 'custom'
+          ? '<span class="source-badge source-custom">Custom</span>'
+          : '<span class="source-badge source-upstream">Upstream</span>';
+        const subCount = skill.subSkills && skill.subSkills.length > 0
+          ? `<span class="sub-count">${skill.subSkills.length} sub-skills</span>`
+          : '';
         card.innerHTML = `
-          <div class="card-name">${esc(skill.name)}</div>
+          <div class="card-name">${esc(skill.name)}${sourceBadge}${subCount}</div>
           <div class="card-desc">${esc(skill.description)}</div>
-          <div class="card-hint">Click to view full definition</div>`;
+          <div class="card-hint">${skill.subSkills && skill.subSkills.length > 0 ? 'Click to explore sub-skills' : 'Click to view full definition'}</div>`;
         grid.appendChild(card);
       }
       container.innerHTML = '';
       container.appendChild(grid);
     }
 
-    async function openSkill(name) {
-      const modal = document.getElementById('modal');
+    function openCategory(skill) {
+      modalHistory = [];
+      const backBtn = document.getElementById('modal-back');
+
+      if (skill.subSkills && skill.subSkills.length > 0) {
+        showSubSkillsList(skill);
+      } else {
+        backBtn.style.display = 'none';
+        openSkillDetail(skill.dirName);
+      }
+
+      document.getElementById('modal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function showSubSkillsList(skill) {
+      const title = document.getElementById('modal-title');
+      const content = document.getElementById('modal-content');
+      const filesDiv = document.getElementById('modal-files');
+      const backBtn = document.getElementById('modal-back');
+
+      title.textContent = skill.name;
+      filesDiv.innerHTML = '';
+      backBtn.style.display = 'none';
+
+      let html = `<p style="color:var(--text-muted);margin-bottom:1rem">${esc(skill.description)}</p>`;
+      html += '<div class="modal-grid">';
+      for (const sub of skill.subSkills) {
+        html += `<div class="modal-card" onclick="drillIntoSubSkill('${escAttr(skill.dirName)}','${escAttr(sub.dirName)}','${escAttr(skill.name)}')">
+          <div class="modal-card-name">${esc(sub.name)}</div>
+          <div class="modal-card-desc">${esc(sub.description)}</div>
+        </div>`;
+      }
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function drillIntoSubSkill(categoryDir, subDir, categoryName) {
+      const currentSkill = allSkills.find(s => s.dirName === categoryDir);
+      modalHistory.push({ type: 'sublist', skill: currentSkill });
+      document.getElementById('modal-back').style.display = 'inline-block';
+      openSkillDetail(categoryDir + '/' + subDir);
+    }
+
+    async function openSkillDetail(path) {
       const title = document.getElementById('modal-title');
       const content = document.getElementById('modal-content');
       const filesDiv = document.getElementById('modal-files');
 
-      title.textContent = name;
       content.innerHTML = '<p style="color:var(--text-muted)">Loading skill...</p>';
       filesDiv.innerHTML = '';
-      modal.classList.add('open');
-      document.body.style.overflow = 'hidden';
 
       try {
-        const res = await fetch('/api/skill/' + encodeURIComponent(name));
+        const res = await fetch('/api/skill/' + encodeURIComponent(path));
         const data = await res.json();
+
+        title.textContent = data.name;
 
         // Show file structure
         if (data.files && data.files.length > 0) {
@@ -410,9 +542,21 @@
       }
     }
 
+    function goBack() {
+      if (modalHistory.length === 0) return;
+      const prev = modalHistory.pop();
+      if (prev.type === 'sublist') {
+        showSubSkillsList(prev.skill);
+      }
+      if (modalHistory.length === 0) {
+        document.getElementById('modal-back').style.display = 'none';
+      }
+    }
+
     function closeModal() {
       document.getElementById('modal').classList.remove('open');
       document.body.style.overflow = '';
+      modalHistory = [];
     }
 
     document.addEventListener('keydown', (e) => {
@@ -425,11 +569,29 @@
       return d.innerHTML;
     }
 
+    function escAttr(s) {
+      return s.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
     document.getElementById('search').addEventListener('input', (e) => {
       const q = e.target.value.toLowerCase();
-      const filtered = allSkills.filter(s =>
-        s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)
-      );
+      if (!q) {
+        renderSkills(allSkills);
+        return;
+      }
+      // Search across categories AND sub-skills
+      const filtered = [];
+      for (const skill of allSkills) {
+        const categoryMatch = skill.name.toLowerCase().includes(q) || skill.description.toLowerCase().includes(q);
+        const matchingSubs = (skill.subSkills || []).filter(sub =>
+          sub.name.toLowerCase().includes(q) || sub.description.toLowerCase().includes(q)
+        );
+        if (categoryMatch) {
+          filtered.push(skill);
+        } else if (matchingSubs.length > 0) {
+          filtered.push({ ...skill, subSkills: matchingSubs });
+        }
+      }
       renderSkills(filtered);
     });
 

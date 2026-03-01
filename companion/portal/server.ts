@@ -128,30 +128,52 @@ Bun.serve({
       });
     }
 
-    // ── API: Skills listing ────────────────────────────────────────────
+    // ── API: Skills listing (with sub-skills) ──────────────────────────
     if (reqPath === "/api/skills") {
       try {
-        const skills: { name: string; description: string }[] = [];
+        function parseSkillMd(filePath: string) {
+          if (!existsSync(filePath)) return null;
+          const content = readFileSync(filePath, "utf-8");
+          const fmMatch = content.match(/^---\s*\n([\s\S]*?)\n---/);
+          if (!fmMatch) return null;
+          const fm = fmMatch[1];
+          const nameMatch = fm.match(/^name:\s*(.+)$/m);
+          const descMatch = fm.match(/^description:\s*(.+)$/m);
+          if (!nameMatch) return null;
+          let desc = descMatch ? descMatch[1].trim() : "";
+          const useWhen = desc.indexOf("USE WHEN");
+          if (useWhen > 0) desc = desc.substring(0, useWhen).trim().replace(/\.\s*$/, "");
+          return { name: nameMatch[1].trim(), description: desc };
+        }
+
+        const skills: { name: string; dirName: string; description: string; source: string; subSkills: { name: string; dirName: string; description: string }[] }[] = [];
         const entries = readdirSync(SKILLS_DIR, { withFileTypes: true });
         for (const entry of entries) {
           if (!entry.isDirectory() || entry.name.startsWith(".") || entry.name === "PAI") continue;
-          const skillFile = join(SKILLS_DIR, entry.name, "SKILL.md");
-          if (!existsSync(skillFile)) continue;
+          const parsed = parseSkillMd(join(SKILLS_DIR, entry.name, "SKILL.md"));
+          if (!parsed) continue;
+
+          // Find sub-skills (subdirectories with their own SKILL.md)
+          const subSkills: { name: string; dirName: string; description: string }[] = [];
           try {
-            const content = readFileSync(skillFile, "utf-8");
-            const fmMatch = content.match(/^---\s*\n([\s\S]*?)\n---/);
-            if (!fmMatch) continue;
-            const fm = fmMatch[1];
-            const nameMatch = fm.match(/^name:\s*(.+)$/m);
-            const descMatch = fm.match(/^description:\s*(.+)$/m);
-            if (nameMatch && descMatch) {
-              // Strip "USE WHEN..." from description for cleaner display
-              let desc = descMatch[1].trim();
-              const useWhen = desc.indexOf("USE WHEN");
-              if (useWhen > 0) desc = desc.substring(0, useWhen).trim().replace(/\.\s*$/, "");
-              skills.push({ name: nameMatch[1].trim(), description: desc });
+            const subEntries = readdirSync(join(SKILLS_DIR, entry.name), { withFileTypes: true });
+            for (const sub of subEntries) {
+              if (!sub.isDirectory() || sub.name.startsWith(".") || sub.name === "node_modules") continue;
+              const subParsed = parseSkillMd(join(SKILLS_DIR, entry.name, sub.name, "SKILL.md"));
+              if (subParsed) {
+                subSkills.push({ name: subParsed.name, dirName: sub.name, description: subParsed.description });
+              }
             }
-          } catch { /* skip unreadable skills */ }
+            subSkills.sort((a, b) => a.name.localeCompare(b.name));
+          } catch { /* no sub-skills */ }
+
+          skills.push({
+            name: parsed.name,
+            dirName: entry.name,
+            description: parsed.description,
+            source: entry.name === "Custom" ? "custom" : "upstream",
+            subSkills,
+          });
         }
         skills.sort((a, b) => a.name.localeCompare(b.name));
         return new Response(JSON.stringify(skills), { headers: JSON_HEADERS });
@@ -160,20 +182,23 @@ Bun.serve({
       }
     }
 
-    // ── API: Single skill detail ───────────────────────────────────────
+    // ── API: Single skill detail (supports nested paths) ───────────────
     if (reqPath.startsWith("/api/skill/")) {
-      const skillName = reqPath.slice("/api/skill/".length);
-      if (!skillName || skillName.includes("..") || skillName.includes("/")) {
-        return new Response(JSON.stringify({ error: "Invalid skill name" }), { status: 400, headers: JSON_HEADERS });
+      const skillPath = decodeURIComponent(reqPath.slice("/api/skill/".length));
+      if (!skillPath || skillPath.includes("..")) {
+        return new Response(JSON.stringify({ error: "Invalid skill path" }), { status: 400, headers: JSON_HEADERS });
       }
-      const skillFile = join(SKILLS_DIR, skillName, "SKILL.md");
+      const parts = skillPath.split("/").filter(Boolean);
+      if (parts.length < 1 || parts.length > 2) {
+        return new Response(JSON.stringify({ error: "Invalid skill path" }), { status: 400, headers: JSON_HEADERS });
+      }
+      const skillDir = join(SKILLS_DIR, ...parts);
+      const skillFile = join(skillDir, "SKILL.md");
       if (!existsSync(skillFile)) {
         return new Response(JSON.stringify({ error: "Skill not found" }), { status: 404, headers: JSON_HEADERS });
       }
       try {
         const content = readFileSync(skillFile, "utf-8");
-        // List additional files in the skill directory for structure info
-        const skillDir = join(SKILLS_DIR, skillName);
         const files: string[] = [];
         function listFiles(dir: string, prefix: string) {
           for (const e of readdirSync(dir, { withFileTypes: true })) {
@@ -184,7 +209,7 @@ Bun.serve({
           }
         }
         listFiles(skillDir, "");
-        return new Response(JSON.stringify({ name: skillName, content, files }), { headers: JSON_HEADERS });
+        return new Response(JSON.stringify({ name: parts[parts.length - 1], content, files }), { headers: JSON_HEADERS });
       } catch (e) {
         return new Response(JSON.stringify({ error: "Failed to read skill" }), { status: 500, headers: JSON_HEADERS });
       }
@@ -241,7 +266,7 @@ Bun.serve({
           info.agentCount = agentEntries.filter(e => e.isFile() && e.name.endsWith(".md")).length;
         } catch { info.agentCount = 0; }
         // Algorithm version
-        const algLatest = join(SKILLS_DIR, "PAI", "Components", "Algorithm", "LATEST");
+        const algLatest = join(CLAUDE_DIR, "PAI", "Algorithm", "LATEST");
         info.algorithmVersion = existsSync(algLatest) ? readFileSync(algLatest, "utf-8").trim() : "unknown";
         // Directory info
         const dirs = [
@@ -493,6 +518,125 @@ Bun.serve({
       }
 
       return new Response(JSON.stringify({ error: "Not found" }), { status: 404, headers: JSON_HEADERS });
+    }
+
+    // ── API: Context files listing ────────────────────────────────────
+    if (reqPath === "/api/context") {
+      try {
+        const PAI_USER_DIR = join(CLAUDE_DIR, "PAI", "USER");
+        const PAI_SYSTEM_DIR = join(CLAUDE_DIR, "PAI");
+        const SETTINGS_PATH = join(CLAUDE_DIR, "settings.json");
+        const CLAUDE_MD_PATH = join(CLAUDE_DIR, "CLAUDE.md");
+
+        let settings: any = {};
+        try { settings = JSON.parse(readFileSync(SETTINGS_PATH, "utf-8")); } catch {}
+        const loadAtStartup: string[] = settings.loadAtStartup?.files || [];
+        const contextFilesList: string[] = settings.contextFiles || [];
+
+        interface ContextFile {
+          name: string;
+          relativePath: string;
+          size: number;
+          category: string;
+          loading: string;
+          loadingDetail: string;
+        }
+        const files: ContextFile[] = [];
+        const listedPaths = new Set<string>();
+
+        // CLAUDE.md — always loaded natively
+        if (existsSync(CLAUDE_MD_PATH)) {
+          const stat = statSync(CLAUDE_MD_PATH);
+          files.push({ name: "CLAUDE.md", relativePath: "CLAUDE.md", size: stat.size, category: "system", loading: "always", loadingDetail: "Claude Code native — loaded every session" });
+          listedPaths.add(CLAUDE_MD_PATH);
+        }
+
+        // loadAtStartup files
+        for (const rel of loadAtStartup) {
+          const full = join(CLAUDE_DIR, rel);
+          if (!existsSync(full)) continue;
+          const stat = statSync(full);
+          if (stat.isDirectory()) continue;
+          const isUser = rel.includes("/USER/");
+          files.push({ name: basename(full), relativePath: rel, size: stat.size, category: isUser ? "user" : "system", loading: "always", loadingDetail: "loadAtStartup — force-injected by LoadContext hook" });
+          listedPaths.add(full);
+        }
+
+        // contextFiles
+        for (const rel of contextFilesList) {
+          const full = join(CLAUDE_DIR, rel);
+          if (!existsSync(full)) continue;
+          const stat = statSync(full);
+          if (stat.isDirectory()) continue;
+          files.push({ name: basename(full), relativePath: rel, size: stat.size, category: "user", loading: "on-demand", loadingDetail: "contextFiles — Claude Code injects when relevant" });
+          listedPaths.add(full);
+        }
+
+        // USER directory files
+        function scanUserDir(dir: string, prefix: string) {
+          if (!existsSync(dir)) return;
+          for (const entry of readdirSync(dir, { withFileTypes: true })) {
+            if (entry.name.startsWith(".")) continue;
+            const full = join(dir, entry.name);
+            const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+            if (entry.isDirectory()) {
+              scanUserDir(full, rel);
+            } else {
+              if (listedPaths.has(full)) continue;
+              const stat = statSync(full);
+              files.push({ name: entry.name, relativePath: `PAI/USER/${rel}`, size: stat.size, category: "user", loading: "on-demand", loadingDetail: "CONTEXT_ROUTING — loaded when task requires it" });
+            }
+          }
+        }
+        scanUserDir(PAI_USER_DIR, "");
+
+        // PAI system docs
+        if (existsSync(PAI_SYSTEM_DIR)) {
+          for (const entry of readdirSync(PAI_SYSTEM_DIR, { withFileTypes: true })) {
+            if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+            const full = join(PAI_SYSTEM_DIR, entry.name);
+            if (listedPaths.has(full)) continue;
+            const stat = statSync(full);
+            const relFromClaude = `PAI/${entry.name}`;
+            const isStartup = loadAtStartup.includes(relFromClaude);
+            files.push({ name: entry.name, relativePath: relFromClaude, size: stat.size, category: "system", loading: isStartup ? "always" : "on-demand", loadingDetail: isStartup ? "loadAtStartup — force-injected by LoadContext hook" : "CONTEXT_ROUTING — loaded when task requires it" });
+          }
+        }
+
+        // Skill customizations
+        const customizations: { skill: string; files: string[] }[] = [];
+        const scDir = join(PAI_USER_DIR, "SKILLCUSTOMIZATIONS");
+        if (existsSync(scDir)) {
+          for (const entry of readdirSync(scDir, { withFileTypes: true })) {
+            if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
+            const skillFiles: string[] = [];
+            for (const f of readdirSync(join(scDir, entry.name))) { skillFiles.push(f); }
+            if (skillFiles.length > 0) { customizations.push({ skill: entry.name, files: skillFiles }); }
+          }
+        }
+
+        return new Response(JSON.stringify({ files, customizations, loadAtStartup, contextFiles: contextFilesList }), { headers: JSON_HEADERS });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: "Failed to read context files" }), { status: 500, headers: JSON_HEADERS });
+      }
+    }
+
+    // ── API: Single context file detail ─────────────────────────────────
+    if (reqPath.startsWith("/api/context/")) {
+      const filePath = decodeURIComponent(reqPath.slice("/api/context/".length));
+      if (!filePath || filePath.includes("..")) {
+        return new Response(JSON.stringify({ error: "Invalid path" }), { status: 400, headers: JSON_HEADERS });
+      }
+      const fullPath = join(CLAUDE_DIR, filePath);
+      if (!fullPath.startsWith(CLAUDE_DIR) || !existsSync(fullPath) || statSync(fullPath).isDirectory()) {
+        return new Response(JSON.stringify({ error: "File not found" }), { status: 404, headers: JSON_HEADERS });
+      }
+      try {
+        const content = readFileSync(fullPath, "utf-8");
+        return new Response(JSON.stringify({ name: basename(fullPath), path: filePath, content }), { headers: JSON_HEADERS });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: "Failed to read file" }), { status: 500, headers: JSON_HEADERS });
+      }
     }
 
     // ── Block path traversal ───────────────────────────────────────────
