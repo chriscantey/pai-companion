@@ -4,25 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Clipboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="/shared/themes.css" rel="stylesheet">
+  <script src="/shared/config.js"></script>
+  <script src="/shared/theme-init.js"></script>
   <style>
-    :root {
-      --bg-primary: #0d1220;
-      --bg-secondary: #141c2c;
-      --bg-tertiary: #1c2638;
-      --text-primary: #f0f2f5;
-      --text-secondary: #c0c8d4;
-      --text-muted: #8a919d;
-      --cyan: #12c2e9;
-      --teal: #2dd4bf;
-      --border: rgba(255, 255, 255, 0.08);
-    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: var(--font-body);
       background: var(--bg-primary);
       color: var(--text-primary);
-      line-height: 1.7;
+      line-height: var(--leading-body);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -68,7 +59,7 @@
       color: var(--text-primary);
       font-family: 'Inter', sans-serif;
       font-size: 0.95rem;
-      line-height: 1.7;
+      line-height: var(--leading-body);
       resize: vertical;
       outline: none;
     }
