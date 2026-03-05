@@ -639,6 +639,16 @@ Bun.serve({
       }
     }
 
+    // ── API: Theme config ──────────────────────────────────────────────
+    if (reqPath === '/shared/config.js') {
+      const theme = process.env.COMPANION_THEME || 'nightfall';
+      const validThemes = ['nightfall', 'clarity'];
+      const activeTheme = validThemes.includes(theme) ? theme : 'nightfall';
+      return new Response(`window.PAI_CONFIG=${JSON.stringify({ theme: activeTheme })};`, {
+        headers: { 'Content-Type': 'application/javascript', ...CORS_HEADERS },
+      });
+    }
+
     // ── Block path traversal ───────────────────────────────────────────
     if (reqPath.includes("..")) {
       return new Response("Forbidden", { status: 403 });

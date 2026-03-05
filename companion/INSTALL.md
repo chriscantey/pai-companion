@@ -113,6 +113,36 @@ Deploy the portal server as a Docker container. This serves web content from `~/
 
 **Verification:** The curl command returns HTML content (the portal homepage). `docker ps` shows `pai-portal` running.
 
+**Theme configuration (optional):**
+
+The portal uses a CSS token system (`/shared/themes.css`) that centralizes all colors and typography. The active theme is controlled by the `COMPANION_THEME` environment variable, which defaults to `nightfall` (the existing dark design) if not set.
+
+To configure the theme, create `~/portal/.env`:
+```
+COMPANION_THEME=nightfall
+```
+
+Restart the container after changing this file:
+```bash
+docker stop pai-portal && docker rm pai-portal
+cd ~/pai-companion/companion/portal && docker build -t pai-portal .
+docker run -d \
+  --name pai-portal \
+  --restart unless-stopped \
+  -p 8080:8080 \
+  --env-file ~/portal/.env \
+  -v ~/portal:/portal \
+  -v ~/exchange:/exchange \
+  -v ~/.claude/skills:/skills:ro \
+  -v ~/.claude/agents:/agents:ro \
+  -v ~/work:/work:ro \
+  -v ~/data:/data:ro \
+  -v ~/.claude:/dotclaude:ro \
+  pai-portal
+```
+
+If `~/portal/.env` does not exist, the container uses the `nightfall` default automatically.
+
 ---
 
 ### Phase 4: Clipboard Verification

@@ -22,3 +22,4 @@ services:
       - WORK_DIR=/work
       - DATA_DIR=/data
       - CLAUDE_DIR=/dotclaude
+      - COMPANION_THEME=${COMPANION_THEME:-nightfall}
