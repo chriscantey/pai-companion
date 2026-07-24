@@ -1,12 +1,14 @@
 # PAI Companion
 
-> **Work in Progress.** This is an evolving onboarding package for [PAI](https://github.com/danielmiessler/PAI) (Personal AI Infrastructure). Expect rough edges, missing pieces, and changes.
+> **Work in Progress.** This is an evolving onboarding package for PAI (Personal AI Infrastructure). Expect rough edges, missing pieces, and changes.
+
+> **Compatibility:** built for and tested against **PAI v5.0.0**, installed pinned per the [PAI 5 setup guide](https://chriscantey.com/posts/2026-05-12-setting-up-your-personal-ai-assistant-pai-5/). Upstream has since renamed the project to [LifeOS](https://github.com/danielmiessler/LifeOS) and moved to newer versions I haven't tested yet. This package tracks the version running on my own install and on several long-running real deployments, and it will move forward when those do.
 
 PAI Companion adds a web portal, file exchange, and optional voice notifications to your PAI-powered AI assistant. It's designed for users running PAI on a local Linux VM (Debian, Ubuntu, or similar).
 
 ## Core: Portal + Exchange
 
-The foundation package. Gives your assistant a portal for displaying web pages, dashboards, and reports, a file exchange for sharing files between your machine and the VM, a clipboard page, and a dark theme design system for all visual output.
+The foundation package. Gives your assistant a portal for displaying web pages, dashboards, and reports, a file exchange for sharing files between your machine and the VM, a clipboard page, and a dark theme design system for all visual output. The portal now includes a **System hub**: twenty browsable pages that group your assistant's brain (skills, agents, context, algorithm), work (ISAs, tasks, sessions), memory (knowledge, reflections, signals, observability, relationships), and config (hooks, settings, plugins) into one place.
 
 The blog post covers what PAI Companion is, what it does, and walks you through getting it running:
 
@@ -46,7 +48,7 @@ Tell your AI assistant:
 
 ## Optional: Upgrade Module
 
-If you're migrating from PAI v3.0 to v4.0, the upgrade module walks your assistant through the process. It handles version detection, backup, skill migration (flat to hierarchical), hook updates, settings merge, and post-upgrade verification. Each phase is independently verifiable and resumable.
+**Legacy module.** If you're migrating an older install from PAI v3.0 to v4.0, the upgrade module walks your assistant through the process. (For new setups, skip this and start directly on pinned v5.0.0 per the compatibility note above.) It handles version detection, backup, skill migration (flat to hierarchical), hook updates, settings merge, and post-upgrade verification. Each phase is independently verifiable and resumable.
 
 This is a one-time operation, not part of normal setup. If you're doing a fresh install, you don't need this.
 

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Algorithm — Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root { --bg-primary:#0d1220; --bg-secondary:#141c2c; --bg-tertiary:#1c2638; --text-primary:#f0f2f5; --text-secondary:#c0c8d4; --text-muted:#8a919d; --cyan:#12c2e9; --purple:#c471ed; --pink:#ff6b9d; --teal:#2dd4bf; --border:rgba(255,255,255,0.08); }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter',-apple-system,sans-serif; background:var(--bg-primary); color:var(--text-primary); line-height:1.7; min-height:100vh; }
+.container { max-width:1080px; margin:0 auto; padding:2rem 1.5rem; }
+nav { font-size:0.85rem; color:var(--text-muted); padding-bottom:0.75rem; border-bottom:1px solid var(--border); margin-bottom:1.5rem; }
+nav a { color:var(--text-muted); text-decoration:none; } nav a:hover { color:var(--cyan); }
+nav .sep { margin:0 0.5rem; }
+header { padding:1.5rem 0 1rem; border-bottom:1px solid var(--border); margin-bottom:1.5rem; }
+header h1 { font-size:1.8rem; font-weight:700; color:var(--cyan); margin-bottom:0.4rem; }
+header p { color:var(--text-muted); font-size:0.95rem; }
+.grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:1rem; margin-bottom:2rem; }
+.card { background:var(--bg-secondary); border:1px solid var(--border); border-radius:10px; padding:1rem 1.15rem; cursor:pointer; transition:all 0.2s; min-height:140px; max-height:160px; display:flex; flex-direction:column; overflow:hidden; }
+.card:hover { background:var(--bg-tertiary); border-color:rgba(18,194,233,0.3); transform:translateY(-1px); }
+.card-title { font-size:0.95rem; font-weight:600; color:var(--cyan); margin-bottom:0.25rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.card-meta { font-size:0.7rem; color:var(--text-muted); margin-bottom:0.45rem; font-family:'SF Mono','Fira Code',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.card-snippet { font-size:0.83rem; color:var(--text-secondary); line-height:1.42; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; flex:1; }
+.empty { text-align:center; padding:3rem; color:var(--text-muted); }
+#loading { text-align:center; padding:2rem; color:var(--text-muted); }
+footer { text-align:center; padding:2rem 0; border-top:1px solid var(--border); margin-top:2rem; color:var(--text-muted); font-size:0.8rem; }
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.72); z-index:100; justify-content:center; align-items:center; padding:2rem; }
+.modal-overlay.open { display:flex; }
+.modal-panel { width:min(900px,100%); max-height:100%; background:var(--bg-primary); border:1px solid var(--border); border-radius:12px; overflow-y:auto; padding:2rem; animation:modalIn 0.18s ease-out; }
+@keyframes modalIn { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
+.modal-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem; padding-bottom:1rem; border-bottom:1px solid var(--border); gap:1rem; }
+.modal-title { font-size:1.4rem; font-weight:700; color:var(--cyan); word-break:break-word; }
+.modal-meta { font-size:0.78rem; color:var(--text-muted); margin-top:0.3rem; font-family:'SF Mono',monospace; }
+.modal-close { background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-muted); font-size:0.85rem; cursor:pointer; padding:0.4rem 0.8rem; border-radius:6px; flex-shrink:0; }
+.modal-close:hover { background:var(--bg-tertiary); color:var(--text-primary); }
+.modal-content { font-family:'SF Mono','Fira Code',monospace; font-size:0.8rem; color:var(--text-secondary); white-space:pre-wrap; word-break:break-word; line-height:1.55; }
+@media (max-width:640px) {
+  .container { padding:1rem 0.75rem; }
+  header h1 { font-size:1.4rem; }
+  .grid { grid-template-columns:1fr; gap:0.6rem; }
+  .card { min-height:auto; max-height:none; padding:0.85rem 1rem; }
+  .modal-overlay { padding:0.5rem; }
+  .modal-panel { padding:1.25rem; border-radius:8px; }
+  .modal-title { font-size:1.15rem; }
+}
+</style></head><body>
+<div class="container">
+<nav><a href="/">Portal</a><span class="sep">/</span><a href="/system/">System</a><span class="sep">/</span><span>Algorithm</span></nav>
+<header><h1>Algorithm</h1><p>Current PAI Algorithm doctrine and version</p></header>
+<div id="content"><div id="loading">Loading...</div></div>
+<footer id="pai-footer">PAI Companion Portal</footer>
+</div>
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+<div class="modal-panel">
+<div class="modal-header"><div><div class="modal-title" id="modal-title"></div><div class="modal-meta" id="modal-meta"></div></div><button class="modal-close" onclick="closeModal()">Esc</button></div>
+<div class="modal-content" id="modal-content"></div>
+</div></div>
+<script src="/shared/common.js"></script>
+<script>
+const API = '/api/algorithm';
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function openModal(item) {
+  document.getElementById('modal-title').textContent = item.title;
+  document.getElementById('modal-meta').textContent = item.meta || '';
+  document.getElementById('modal-content').textContent = item.content || '(no content)';
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); document.body.style.overflow=''; }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+async function load() {
+  const c = document.getElementById('content');
+  try {
+    const res = await fetch(API);
+    const data = await res.json();
+    if (!Array.isArray(data) || data.length === 0) {
+      c.innerHTML = '<div class="empty">Nothing here yet. This page will populate as your assistant uses PAI.</div>';
+      return;
+    }
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+    for (const item of data) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = '<div class="card-title">' + esc(item.title) + '</div>' +
+                       '<div class="card-meta">' + esc(item.meta || '') + '</div>' +
+                       '<div class="card-snippet">' + esc(item.snippet || item.content || '') + '</div>';
+      card.onclick = () => openModal(item);
+      grid.appendChild(card);
+    }
+    c.innerHTML = ''; c.appendChild(grid);
+  } catch (e) { c.innerHTML = '<div class="empty">Could not load — ' + esc(e.message) + '</div>'; }
+}
+load();
+</script></body></html>

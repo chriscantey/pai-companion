@@ -51,23 +51,23 @@ sudo usermod -aG docker $USER
 
 **Important:** Log out and back in (or reboot) after adding yourself to the docker group. The next step won't work until you do.
 
-### Step 5: PAI v4.0
+### Step 5: PAI v5.0.0 (pinned)
+
+Follow the [PAI 5 setup guide](https://chriscantey.com/posts/2026-05-12-setting-up-your-personal-ai-assistant-pai-5/), which installs the exact version this package is tested against and explains each step. The short version:
 
 ```bash
-git clone https://github.com/danielmiessler/PAI.git
-cp -r PAI/Releases/$(ls PAI/Releases/ | sort -V | tail -1)/.claude ~/
-cd ~/.claude && sed -i 's/--mode gui/--mode cli/' install.sh && bash install.sh
+git clone --branch v5.0.0 --depth 1 --filter=blob:none --sparse https://github.com/danielmiessler/LifeOS.git ~/pai-v5
+cd ~/pai-v5
+git rev-parse HEAD   # must print 12265edd740b56199a77b9d826fda27872bb04e9
+git sparse-checkout set Releases/v5.0.0
+bash Releases/v5.0.0/.claude/install.sh
 ```
 
-### Step 6: Fix shell configuration
+Do not use a newer release here. Upstream renamed to LifeOS and moved on; this companion is tested against v5.0.0 only.
 
-The PAI installer writes to `.zshrc` (macOS default), but Linux uses bash. These commands merge the config and fix a known path issue in the current release:
+### Step 6: Linux adaptation
 
-```bash
-[ -f ~/.zshrc ] && cat ~/.zshrc >> ~/.bashrc
-sed -i 's|skills/PAI/Tools/pai.ts|PAI/Tools/pai.ts|g' ~/.bashrc
-source ~/.bashrc
-```
+Apply the [PAI 5 Linux adaptation](https://gist.github.com/chriscantey/c55d0edf66a3c64dff9857e4aed8b5ec) (the setup guide's Step 7). It fixes the shell configuration, case symlinks, and service setup that v5 needs on Linux. The old v4-era zshrc merge is no longer needed.
 
 ### Verify
 

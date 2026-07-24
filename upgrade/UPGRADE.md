@@ -1,5 +1,7 @@
 # PAI Upgrade: v3 to v4
 
+> **LEGACY MODULE (July 2026).** This walkthrough is for the PAI v3 → v4 era and is kept for historical installs only. Upstream has since renamed to LifeOS and the repo layout referenced below no longer matches upstream main. If a clone is needed, pin it to the old layout: `git clone --branch v4.0.3 --depth 1 https://github.com/danielmiessler/LifeOS.git ~/upstream/pai`. New setups should skip this module entirely and install pinned v5.0.0 per the [setup guide](https://chriscantey.com/posts/2026-05-12-setting-up-your-personal-ai-assistant-pai-5/).
+
 > **For AI Assistants.** If you were directed here by your user to upgrade their PAI installation, follow the phases below. Each phase is independently verifiable. If interrupted, you can resume from any phase.
 
 **Prerequisites (verify before starting):** See [PREREQUISITES.md](PREREQUISITES.md)
@@ -16,9 +18,9 @@
 - Local: `~/upstream/pai/Releases/v4.*/.claude/` (if the upstream repo is cloned; uses the latest v4.x release)
 - Remote: The PAI GitHub releases page
 
-If the local path doesn't exist, clone the upstream repo first:
+If the local path doesn't exist, clone the upstream repo first, pinned to the last v4-era tag (upstream main has moved on and no longer contains this layout):
 ```bash
-git clone https://github.com/danielmiessler/PAI.git ~/upstream/pai
+git clone --branch v4.0.3 --depth 1 https://github.com/danielmiessler/LifeOS.git ~/upstream/pai
 ```
 
 Throughout this document, `V4_SOURCE` and `V3_SOURCE` refer to the release directories:

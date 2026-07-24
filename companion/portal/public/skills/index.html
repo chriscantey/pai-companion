@@ -29,7 +29,7 @@
       line-height: 1.7;
       min-height: 100vh;
     }
-    .container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .container { max-width: 1080px; margin: 0 auto; padding: 2rem 1.5rem; }
     nav {
       display: flex;
       align-items: center;
@@ -147,30 +147,33 @@
     }
     #loading { text-align: center; padding: 2rem; color: var(--text-muted); }
 
-    /* Modal / slide-over */
+    /* Modal — centered overlay (Portal v2) */
     .modal-overlay {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.72);
       z-index: 100;
-      justify-content: flex-end;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
     }
     .modal-overlay.open {
       display: flex;
     }
     .modal-panel {
-      width: min(720px, 90vw);
-      height: 100vh;
+      width: min(900px, 100%);
+      max-height: 100%;
       background: var(--bg-primary);
-      border-left: 1px solid var(--border);
+      border: 1px solid var(--border);
+      border-radius: 12px;
       overflow-y: auto;
       padding: 2rem;
-      animation: slideIn 0.2s ease-out;
+      animation: modalIn 0.18s ease-out;
     }
-    @keyframes slideIn {
-      from { transform: translateX(100%); }
-      to { transform: translateX(0); }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to   { opacity: 1; transform: scale(1); }
     }
     .modal-header {
       display: flex;
@@ -356,6 +359,7 @@
     }
     .frontmatter .fm-key { color: var(--purple); }
     .frontmatter .fm-val { color: var(--teal); }
+  @media (max-width:640px) { .container { padding:1rem 0.75rem; } header h1 { font-size:1.4rem; } .grid { grid-template-columns:1fr; gap:0.6rem; } .card { min-height:auto; max-height:none; padding:0.85rem 1rem; } .modal-overlay { padding:0.5rem; } .modal-panel { padding:1.25rem; border-radius:8px; } .modal-title { font-size:1.15rem; } }
   </style>
 </head>
 <body>

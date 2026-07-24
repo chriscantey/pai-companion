@@ -8,32 +8,26 @@
 - Bun runtime
 - Claude Code installed and authenticated
 - Docker installed and working without sudo
-- PAI v4.0 installed
+- PAI v5.0.0 installed, pinned per the [PAI 5 setup guide](https://chriscantey.com/posts/2026-05-12-setting-up-your-personal-ai-assistant-pai-5/) (this package is tested against exactly that version)
 
 **Where are the companion files?** Either cloned to `~/pai-companion/` or available at the GitHub raw URL. Read files from whichever location your user directed you to.
 
 ---
 
-### Phase 0: Linux Adaptation
+### Phase 0: Linux Adaptation Check
 
-The upstream PAI statusline uses macOS-specific syntax (`stat -f %m` for file mtime). On Linux, this returns filesystem info instead of modification times, breaking all cache-driven sections (location, weather, quotes). The patch script detects what needs fixing and applies only the relevant fixes.
-
-**What it patches (auto-detected):**
-- `stat -f %m` calls replaced with cross-platform `get_mtime()` helper (all versions)
-- `tr ' ' '─'` replaced with `repeat_dash()` for multibyte-safe rendering (extended versions only)
-- macOS Keychain OAuth replaced with `~/.claude/.credentials.json` fallback (extended versions only)
+PAI v5.0.0 fixed the old PAI 3/4 Linux quirks upstream (statusline `stat`, multibyte `tr`, Keychain OAuth). What v5 still needs on Linux is covered by the [PAI 5 Linux adaptation](https://gist.github.com/chriscantey/c55d0edf66a3c64dff9857e4aed8b5ec), which the setup guide applies in its Step 7. This phase just verifies it happened.
 
 **Steps:**
-1. Run the statusline patch script:
+1. Verify the case-fix symlinks exist:
    ```bash
-   bash ~/pai-companion/companion/patches/statusline-linux.sh
+   test -L ~/.claude/PAI/Pulse && test -L ~/.claude/PAI/Tools && echo "symlinks OK"
    ```
-2. Verify by running it again (should report no fixes needed):
-   ```bash
-   bash ~/pai-companion/companion/patches/statusline-linux.sh
-   ```
+2. If that check fails, have the assistant read and apply the adaptation gist above before continuing.
 
-**Verification:** The second run reports "No fixes needed — statusline is already Linux-compatible." The script is idempotent and safe to run on any PAI version.
+**Verification:** The symlink check prints "symlinks OK".
+
+**Legacy note:** `patches/statusline-linux.sh` remains in this repo for PAI 3/4 installs only. Do not run it on v5. It self-detects and reports "No fixes needed" there, but it has no purpose on v5.
 
 ---
 
@@ -88,25 +82,21 @@ Create the organized home directory structure.
 Deploy the portal server as a Docker container. This serves web content from `~/portal/` and provides the file exchange.
 
 **Steps:**
-1. Copy the portal public files (homepage, clipboard, exchange UI) into `~/portal/`:
+1. Copy the portal public files (homepage, the System hub, the welcome page, and all portal pages) into `~/portal/`:
    ```bash
    cp -r ~/pai-companion/companion/portal/public/* ~/portal/
    ```
-2. Copy the welcome page:
-   ```bash
-   cp -r ~/pai-companion/companion/welcome ~/portal/welcome
-   ```
-3. Copy Docker files to `~/portal/`:
+2. Copy Docker files to `~/portal/`:
    ```bash
    cp ~/pai-companion/companion/portal/server.ts ~/portal/server.ts
    cp ~/pai-companion/companion/portal/Dockerfile ~/portal/Dockerfile
    cp ~/pai-companion/companion/portal/docker-compose.yml ~/portal/docker-compose.yml
    ```
-4. Build and start the container:
+3. Build and start the container:
    ```bash
    cd ~/portal && docker compose up -d --build
    ```
-5. Verify the server is running:
+4. Verify the server is running:
    ```bash
    curl -f http://$(cat ~/.vm-ip):8080/
    ```
@@ -158,21 +148,24 @@ VM_IP=$(cat ~/.vm-ip)
 
 You will need to replace `{VM_IP}` with the actual IP in the content below.
 
-**Step 6a: Append to identity file**
+**Step 6a: Build the companion context file**
 
-Read `~/pai-companion/companion/context/identity-additions.md`, replace all `{VM_IP}` with the actual VM IP, and append the result to `~/.claude/PAI/USER/IDENTITY.md`.
-
-If `IDENTITY.md` does not exist, create it. (Fresh PAI installs may only have `DAIDENTITY.md`.) If it does exist, do NOT overwrite — append with a clear separator:
+Read `~/pai-companion/companion/context/identity-additions.md` and `~/pai-companion/companion/context/steering-rules.md`, replace all `{VM_IP}` with the actual VM IP, and append both (infrastructure context first, then rules) to `~/.claude/PAI/USER/AISTEERINGRULES.md`. Create the file if it doesn't exist. Do NOT overwrite existing content — append with a clear separator:
 ```
 ---
 <!-- Added by PAI Companion setup -->
 ```
 
-**Step 6b: Append to steering rules**
+On PAI v5, identity lives in `PRINCIPAL_IDENTITY.md` / `DA_IDENTITY.md`. Do not modify those files.
 
-Read `~/pai-companion/companion/context/steering-rules.md`, replace all `{VM_IP}` with the actual VM IP, and append the result to `~/.claude/PAI/USER/AISTEERINGRULES.md`.
+**Step 6b: Add the always-loaded summary to CLAUDE.md**
 
-Do NOT overwrite the existing content. Append with a clear separator.
+`AISTEERINGRULES.md` is not auto-loaded on PAI v5, so append this short block to the Operational Rules area of `~/.claude/CLAUDE.md` (replace `{VM_IP}` first):
+
+```
+- **Visual-first output.** For reports, dashboards, or anything styled, write HTML to `~/portal/{tag}/index.html` and surface the URL (http://{VM_IP}:8080/{tag}/). Prefer visual over terminal text dumps for anything the user will read or share. Apply the dark theme from `~/.claude/PAI/USER/DESIGN.md`.
+- Companion repo full rules (with Bad/Correct examples): `~/.claude/PAI/USER/AISTEERINGRULES.md`. Always-loaded summary lives here in CLAUDE.md.
+```
 
 **Step 6c: Create design system file**
 
@@ -180,13 +173,14 @@ Copy `~/pai-companion/companion/context/design-system.md` to `~/.claude/PAI/USER
 
 **Step 6d: Update settings.json contextFiles**
 
-Ensure `~/.claude/settings.json` includes `DESIGN.md` in the `contextFiles` array. Read the current settings.json, and if `USER/DESIGN.md` is not already in `contextFiles`, add it. Use `jq` or careful JSON editing. Do not break the existing settings.
+Ensure `~/.claude/settings.json` includes `USER/DESIGN.md` in the `contextFiles` array. Read the current settings.json, and if it is not already there, add it. Use `jq` or careful JSON editing. Do not break the existing settings. (PAI v5 ships this array empty; adding `USER/DESIGN.md` is exactly how the reference installs run.)
 
 **Verification:**
-- `grep "VM_IP" ~/.claude/PAI/USER/IDENTITY.md` should NOT match (all {VM_IP} replaced with actual IP)
 - `grep -i "Visual-first" ~/.claude/PAI/USER/AISTEERINGRULES.md` should match
+- `grep -i "Visual-first" ~/.claude/CLAUDE.md` should match
+- `grep "VM_IP" ~/.claude/PAI/USER/AISTEERINGRULES.md ~/.claude/CLAUDE.md` should NOT match (placeholders replaced)
 - `test -f ~/.claude/PAI/USER/DESIGN.md` should succeed
-- The actual VM IP should appear in the identity and steering rules files
+- `python3 -c "import json;print(json.load(open('$HOME/.claude/settings.json'))['contextFiles'])"` prints a list containing `USER/DESIGN.md`
 
 ---
 
@@ -198,88 +192,27 @@ This was included in the design system file (Phase 6c). The methodology section 
 
 ---
 
-### Phase 8: Upstream Repos and Algorithm Update
+### Phase 8: Upstream Reference Repo (Pinned)
 
-Set up upstream reference repositories and install the latest Algorithm.
+Set up a pinned upstream reference checkout. This is read-only reference material for the assistant, frozen at the same v5.0.0 the system runs. Do NOT pull latest here: upstream renamed to LifeOS and moved to newer major versions that this install is not tested against.
 
 **Steps:**
-1. Clone upstream PAI:
+1. Clone upstream at the pinned v5.0.0 tag (skip if `~/upstream/pai` already exists):
    ```bash
-   git clone https://github.com/danielmiessler/PAI.git ~/upstream/pai
+   git clone --branch v5.0.0 --depth 1 --filter=blob:none --sparse https://github.com/danielmiessler/LifeOS.git ~/upstream/pai
+   cd ~/upstream/pai && git rev-parse HEAD
    ```
-   (If already exists, run `git -C ~/upstream/pai pull` instead)
-
-2. Clone upstream Algorithm:
+   The second command must print `12265edd740b56199a77b9d826fda27872bb04e9`. If it prints anything else, stop and tell the user the upstream tag moved.
    ```bash
-   git clone https://github.com/danielmiessler/TheAlgorithm.git ~/upstream/TheAlgorithm
-   ```
-   (If already exists, run `git -C ~/upstream/TheAlgorithm pull` instead)
-
-3. Install the latest Algorithm from the upstream repo (never downgrade):
-   ```bash
-   ALG_DIR=~/.claude/PAI/Algorithm
-
-   # Read currently installed version (from PAI v4.0)
-   CURRENT_VER=""
-   if [ -f "$ALG_DIR/LATEST" ]; then
-     CURRENT_VER=$(cat "$ALG_DIR/LATEST" | sed 's/^v//')
-   fi
-
-   # Find the true latest by checking BOTH upstream clone AND local versions
-   # This prevents oddly-named upstream files from confusing sort -V
-   ALL_VERSIONS=""
-   for f in ~/upstream/TheAlgorithm/versions/TheAlgorithm_v*.md "$ALG_DIR"/v*.md; do
-     [ -f "$f" ] || continue
-     ver=$(basename "$f" | sed 's/^TheAlgorithm_v//;s/^v//;s/\.md$//')
-     # Only accept clean version numbers (digits and dots)
-     if echo "$ver" | grep -qE '^[0-9]+(\.[0-9]+)*$'; then
-       ALL_VERSIONS="$ALL_VERSIONS $ver"
-     fi
-   done
-
-   BEST_VER=$(printf '%s\n' $ALL_VERSIONS | sort -V | tail -1)
-
-   if [ -n "$BEST_VER" ]; then
-     # Copy upstream version file if it exists and we don't have it
-     UPSTREAM_FILE=~/upstream/TheAlgorithm/versions/TheAlgorithm_v${BEST_VER}.md
-     if [ -f "$UPSTREAM_FILE" ] && [ ! -f "$ALG_DIR/v${BEST_VER}.md" ]; then
-       cp "$UPSTREAM_FILE" "$ALG_DIR/v${BEST_VER}.md"
-     fi
-
-     # Only update LATEST if the best version is newer than what's installed
-     if [ -z "$CURRENT_VER" ]; then
-       echo "v${BEST_VER}" > "$ALG_DIR/LATEST"
-       echo "Algorithm: installed v${BEST_VER}"
-     elif [ "$BEST_VER" != "$CURRENT_VER" ]; then
-       NEWER=$(printf '%s\n%s\n' "$CURRENT_VER" "$BEST_VER" | sort -V | tail -1)
-       if [ "$NEWER" = "$BEST_VER" ]; then
-         echo "v${BEST_VER}" > "$ALG_DIR/LATEST"
-         echo "Algorithm: upgraded from v${CURRENT_VER} to v${BEST_VER}"
-       else
-         echo "Algorithm: keeping v${CURRENT_VER} (best available is v${BEST_VER})"
-       fi
-     else
-       echo "Algorithm: v${CURRENT_VER} is already the latest"
-     fi
-   else
-     if [ -n "$CURRENT_VER" ]; then
-       echo "Algorithm: keeping v${CURRENT_VER} (no valid versions found upstream)"
-     else
-       echo "WARNING: No Algorithm version found. PAI v4.0 should have installed one."
-     fi
-   fi
+   git sparse-checkout set Releases/v5.0.0
    ```
 
-4. Rebuild the dynamic core (if the build tool exists):
-   ```bash
-   [ -f ~/.claude/PAI/Tools/BuildCLAUDE.ts ] && bun ~/.claude/PAI/Tools/BuildCLAUDE.ts
-   ```
+2. PAI v5.0.0 ships with its own Algorithm (`~/.claude/PAI/ALGORITHM/`). Leave it alone. Do not install Algorithm versions from other repos.
 
 **Verification:**
-- `git -C ~/upstream/pai log --oneline -1` shows a recent commit
-- `git -C ~/upstream/TheAlgorithm log --oneline -1` shows a recent commit
-- `cat ~/.claude/PAI/Algorithm/LATEST` shows a version (e.g. `v1.6.0`) — never lower than what PAI shipped with
-- `test -f ~/.claude/skills/PAI/SKILL.md` succeeds (dynamic core rebuilt)
+- `git -C ~/upstream/pai rev-parse HEAD` prints `12265edd740b56199a77b9d826fda27872bb04e9`
+- `ls ~/upstream/pai/Releases/v5.0.0/.claude` shows the release tree
+- `cat ~/.claude/PAI/ALGORITHM/LATEST` still shows the version PAI 5 shipped (untouched)
 
 ---
 

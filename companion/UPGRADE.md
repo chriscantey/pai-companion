@@ -43,7 +43,7 @@ Verify the current installation and check for the companion source repo.
 3. Inventory user-created portal pages (these will NOT be touched):
    ```bash
    echo "=== User Portal Pages (will be preserved) ==="
-   SYSTEM_DIRS="skills agents context system clipboard exchange shared welcome .thumbs"
+   SYSTEM_DIRS="skills agents context system clipboard exchange shared welcome algorithm hooks identity isas knowledge observability plugins reflections relationships sessions settings signals tasks .thumbs"
    for dir in ~/portal/*/; do
      dir_name=$(basename "$dir")
      if ! echo "$SYSTEM_DIRS" | grep -qw "$dir_name"; then
@@ -91,7 +91,7 @@ Replace system-managed portal pages with the latest versions. User-created pages
    ```bash
    echo "=== Updating System Portal Pages ==="
 
-   SYSTEM_DIRS="skills agents context system clipboard exchange shared"
+   SYSTEM_DIRS="skills agents context system clipboard exchange shared welcome algorithm hooks identity isas knowledge observability plugins reflections relationships sessions settings signals tasks"
 
    for dir in $SYSTEM_DIRS; do
      if [ -d ~/pai-companion/companion/portal/public/$dir ]; then
@@ -104,16 +104,7 @@ Replace system-managed portal pages with the latest versions. User-created pages
    done
    ```
 
-2. Update the welcome page:
-   ```bash
-   if [ -d ~/pai-companion/companion/welcome ]; then
-     rm -rf ~/portal/welcome
-     cp -r ~/pai-companion/companion/welcome ~/portal/welcome
-     echo "  Updated: welcome/"
-   fi
-   ```
-
-3. Update server infrastructure files:
+2. Update server infrastructure files:
    ```bash
    for f in server.ts Dockerfile docker-compose.yml; do
      if [ -f ~/pai-companion/companion/portal/$f ]; then
@@ -227,7 +218,7 @@ Run the full verification to confirm everything is working.
    ```bash
    echo ""
    echo "=== User Pages (should be unchanged) ==="
-   SYSTEM_DIRS="skills agents context system clipboard exchange shared welcome .thumbs"
+   SYSTEM_DIRS="skills agents context system clipboard exchange shared welcome algorithm hooks identity isas knowledge observability plugins reflections relationships sessions settings signals tasks .thumbs"
    for dir in ~/portal/*/; do
      dir_name=$(basename "$dir")
      if ! echo "$SYSTEM_DIRS" | grep -qw "$dir_name"; then

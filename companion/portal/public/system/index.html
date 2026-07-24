@@ -28,7 +28,7 @@
       line-height: 1.7;
       min-height: 100vh;
     }
-    .container { max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .container { max-width: 1080px; margin: 0 auto; padding: 2rem 1.5rem; }
     nav {
       display: flex;
       align-items: center;
@@ -168,6 +168,47 @@
     }
     .callout p { color: var(--text-secondary); font-size: 0.9rem; }
     .callout strong { color: var(--text-primary); }
+    /* Tile-grid (browse PAI surfaces) */
+    .tile-rows { margin: 1.5rem 0 2rem; }
+    .tile-row { margin-bottom: 1.25rem; }
+    .tile-row-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 0.6rem;
+    }
+    .tile-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 0.75rem;
+    }
+    .tile {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.9rem 1.05rem;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      transition: all 0.2s;
+    }
+    a.tile:hover {
+      background: var(--bg-tertiary);
+      border-color: rgba(18, 194, 233, 0.3);
+      transform: translateY(-1px);
+    }
+    .tile-soon { opacity: 0.5; cursor: default; }
+    .tile-soon:hover { transform: none; border-color: var(--border); background: var(--bg-secondary); }
+    .tile-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--cyan);
+      margin-bottom: 0.2rem;
+    }
+    .tile-soon .tile-title { color: var(--text-secondary); }
+    .tile-meta { font-size: 0.78rem; color: var(--text-muted); }
     footer {
       text-align: center;
       padding: 2rem 0;
@@ -176,6 +217,7 @@
       color: var(--text-muted);
       font-size: 0.8rem;
     }
+  @media (max-width:640px) { .container { padding:1rem 0.75rem; } header h1 { font-size:1.4rem; } .grid { grid-template-columns:1fr; gap:0.6rem; } }
   </style>
 </head>
 <body>
@@ -212,6 +254,55 @@
 
     <div class="callout">
       <p><strong>PAI</strong> (Personal AI Infrastructure) is an open-source framework by Daniel Miessler that enhances Claude Code with skills, hooks, and a structured problem-solving algorithm. Each skill is a specialized capability your assistant can use. Agents are specialized workers it can delegate tasks to.</p>
+    </div>
+
+    <h2>Browse</h2>
+    <div class="tile-rows">
+      <div class="tile-row">
+        <div class="tile-row-label">🧠 Brain</div>
+        <div class="tile-grid">
+          <a href="/skills/" class="tile">
+            <div class="tile-title">Skills</div>
+            <div class="tile-meta">Specialized capabilities</div>
+          </a>
+          <a href="/agents/" class="tile">
+            <div class="tile-title">Agents</div>
+            <div class="tile-meta">Delegatable workers</div>
+          </a>
+          <a href="/context/" class="tile">
+            <div class="tile-title">Context</div>
+            <div class="tile-meta">USER scaffolding files</div>
+          </a>
+          <a href="/algorithm/" class="tile"><div class="tile-title">Algorithm</div><div class="tile-meta">Current doctrine</div></a>
+          <a href="/identity/" class="tile"><div class="tile-title">Identity</div><div class="tile-meta">Principal / DA / BasicInfo</div></a>
+        </div>
+      </div>
+      <div class="tile-row">
+        <div class="tile-row-label">📋 Work</div>
+        <div class="tile-grid">
+          <a href="/isas/" class="tile"><div class="tile-title">ISAs</div><div class="tile-meta">Active project ISAs</div></a>
+          <a href="/tasks/" class="tile"><div class="tile-title">Tasks</div><div class="tile-meta">Live task list</div></a>
+          <a href="/sessions/" class="tile"><div class="tile-title">Sessions</div><div class="tile-meta">Session registry</div></a>
+        </div>
+      </div>
+      <div class="tile-row">
+        <div class="tile-row-label">💾 Memory</div>
+        <div class="tile-grid">
+          <a href="/knowledge/" class="tile"><div class="tile-title">Knowledge</div><div class="tile-meta">Typed entity graph</div></a>
+          <a href="/reflections/" class="tile"><div class="tile-title">Reflections</div><div class="tile-meta">Per-run reflections</div></a>
+          <a href="/signals/" class="tile"><div class="tile-title">Signals</div><div class="tile-meta">Learning signals</div></a>
+          <a href="/observability/" class="tile"><div class="tile-title">Observability</div><div class="tile-meta">Hook + tool log</div></a>
+          <a href="/relationships/" class="tile"><div class="tile-title">Relationships</div><div class="tile-meta">Conversation notes</div></a>
+        </div>
+      </div>
+      <div class="tile-row">
+        <div class="tile-row-label">⚙️ Config</div>
+        <div class="tile-grid">
+          <a href="/hooks/" class="tile"><div class="tile-title">Hooks</div><div class="tile-meta">Hook firing log</div></a>
+          <a href="/settings/" class="tile"><div class="tile-title">Settings</div><div class="tile-meta">settings.json viewer</div></a>
+          <a href="/plugins/" class="tile"><div class="tile-title">Plugins</div><div class="tile-meta">Marketplaces + enabled</div></a>
+        </div>
+      </div>
     </div>
 
     <h2>How It Works</h2>

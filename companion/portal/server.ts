@@ -265,8 +265,10 @@ Bun.serve({
           const agentEntries = readdirSync(AGENTS_DIR, { withFileTypes: true });
           info.agentCount = agentEntries.filter(e => e.isFile() && e.name.endsWith(".md")).length;
         } catch { info.agentCount = 0; }
-        // Algorithm version
-        const algLatest = join(CLAUDE_DIR, "PAI", "Algorithm", "LATEST");
+        // Algorithm version — PAI 5 uses ALGORITHM (uppercase); fall back to PAI 4's lowercase Algorithm
+        const algLatestV5 = join(CLAUDE_DIR, "PAI", "ALGORITHM", "LATEST");
+        const algLatestV4 = join(CLAUDE_DIR, "PAI", "Algorithm", "LATEST");
+        const algLatest = existsSync(algLatestV5) ? algLatestV5 : algLatestV4;
         info.algorithmVersion = existsSync(algLatest) ? readFileSync(algLatest, "utf-8").trim() : "unknown";
         // Directory info
         const dirs = [
@@ -631,11 +633,155 @@ Bun.serve({
       if (!fullPath.startsWith(CLAUDE_DIR) || !existsSync(fullPath) || statSync(fullPath).isDirectory()) {
         return new Response(JSON.stringify({ error: "File not found" }), { status: 404, headers: JSON_HEADERS });
       }
+      // Never serve credential-shaped files, even by exact name — same
+      // filter the browse API applies to listings.
+      if (SENSITIVE_PATTERNS.some((p) => p.test(basename(fullPath)))) {
+        return new Response(JSON.stringify({ error: "File not found" }), { status: 404, headers: JSON_HEADERS });
+      }
       try {
         const content = readFileSync(fullPath, "utf-8");
         return new Response(JSON.stringify({ name: basename(fullPath), path: filePath, content }), { headers: JSON_HEADERS });
       } catch (e) {
         return new Response(JSON.stringify({ error: "Failed to read file" }), { status: 500, headers: JSON_HEADERS });
+      }
+    }
+
+    // ── API v2: page-renderer endpoints (Portal v2 — return Array<{title,meta,snippet,content}>)
+    if (reqPath.startsWith("/api/") && ["algorithm","identity","hooks-detail","reflections","signals","observability","voice-events","isas","tasks","sessions","knowledge","relationships","settings","plugins"].some(s => reqPath === "/api/" + s)) {
+      const readSafe = (p: string): string | null => { try { return existsSync(p) ? readFileSync(p, "utf-8") : null; } catch { return null; } };
+      const shortSnip = (s: string, n = 200): string => s.replace(/^---[\s\S]*?---\s*/, "").replace(/\s+/g, " ").trim().slice(0, n);
+      const lsDir = (d: string): string[] => { try { return readdirSync(d).filter(n => !n.startsWith(".")).sort(); } catch { return []; } };
+
+      try {
+        if (reqPath === "/api/algorithm") {
+          const latestV5 = join(CLAUDE_DIR, "PAI", "ALGORITHM", "LATEST");
+          const latestV4 = join(CLAUDE_DIR, "PAI", "Algorithm", "LATEST");
+          const latestPath = existsSync(latestV5) ? latestV5 : latestV4;
+          const version = (readSafe(latestPath) || "").trim() || "unknown";
+          const algDirV5 = join(CLAUDE_DIR, "PAI", "ALGORITHM", `v${version}.md`);
+          const algDirV4 = join(CLAUDE_DIR, "PAI", "Algorithm", `v${version}.md`);
+          const content = readSafe(existsSync(algDirV5) ? algDirV5 : algDirV4);
+          return new Response(JSON.stringify([{
+            title: `Algorithm v${version}`,
+            meta: "7-phase: Observe · Think · Plan · Build · Execute · Verify · Learn",
+            snippet: content ? shortSnip(content, 250) : "Algorithm file not found",
+            content: content || "(file not found at " + latestPath + ")"
+          }]), { headers: JSON_HEADERS });
+        }
+        if (reqPath === "/api/identity") {
+          const files = ["PRINCIPAL_IDENTITY.md", "DA_IDENTITY.md", "BASICINFO.md", "AISTEERINGRULES.md", "DESIGN.md", "OPINIONS.md", "CONTACTS.md"];
+          const out: any[] = [];
+          for (const f of files) {
+            const c = readSafe(join(CLAUDE_DIR, "PAI", "USER", f));
+            if (!c) continue;
+            const titleMatch = c.match(/^#\s+(.+)$/m);
+            out.push({ title: titleMatch ? titleMatch[1] : f, meta: `PAI/USER/${f}`, snippet: shortSnip(c, 220), content: c });
+          }
+          return new Response(JSON.stringify(out), { headers: JSON_HEADERS });
+        }
+        if (reqPath === "/api/hooks-detail") {
+          const dir = join(CLAUDE_DIR, "hooks");
+          const out: any[] = [];
+          for (const f of lsDir(dir).filter(n => n.endsWith(".hook.ts"))) {
+            const fullPath = join(dir, f);
+            const c = readSafe(fullPath); if (!c) continue;
+            const headerMatch = c.match(/\/\*\*([\s\S]*?)\*\//);
+            const header = headerMatch ? headerMatch[1].replace(/^\s*\*\s?/gm, "").trim() : "";
+            out.push({ title: f.replace(/\.hook\.ts$/, ""), meta: `${(statSync(fullPath).size / 1024).toFixed(1)}KB`, snippet: shortSnip(header || c, 220), content: c.slice(0, 16000) });
+          }
+          return new Response(JSON.stringify(out), { headers: JSON_HEADERS });
+        }
+        if (reqPath === "/api/reflections") {
+          const path = join(CLAUDE_DIR, "PAI", "MEMORY", "LEARNING", "REFLECTIONS", "algorithm-reflections.jsonl");
+          const c = readSafe(path);
+          if (!c) return new Response(JSON.stringify([]), { headers: JSON_HEADERS });
+          const lines = c.trim().split("\n").reverse().slice(0, 30);
+          const out = lines.map(line => { try { const j = JSON.parse(line); return { title: j.task_description || j.prd_id || "Reflection", meta: `${j.timestamp || ""} · ${j.effort_level || ""}`, snippet: j.reflection_q1 || j.reflection_q2 || JSON.stringify(j).slice(0, 200), content: JSON.stringify(j, null, 2) }; } catch { return null; } }).filter(Boolean);
+          return new Response(JSON.stringify(out), { headers: JSON_HEADERS });
+        }
+        if (reqPath === "/api/signals" || reqPath === "/api/observability") {
+          const dir = reqPath === "/api/signals" ? join(CLAUDE_DIR, "PAI", "MEMORY", "LEARNING") : join(CLAUDE_DIR, "PAI", "MEMORY", "OBSERVABILITY");
+          const out: any[] = [];
+          for (const f of lsDir(dir).filter(n => n.endsWith(".jsonl"))) {
+            const c = readSafe(join(dir, f)); if (!c) continue;
+            const count = c.trim().split("\n").filter(Boolean).length;
+            out.push({ title: f.replace(/\.jsonl$/, ""), meta: `${count} entries`, snippet: c.split("\n").slice(0, 3).join(" ").slice(0, 200), content: c.split("\n").slice(-50).join("\n") });
+          }
+          return new Response(JSON.stringify(out), { headers: JSON_HEADERS });
+        }
+        if (reqPath === "/api/voice-events") {
+          const path = join(CLAUDE_DIR, "PAI", "MEMORY", "VOICE", "voice-events.jsonl");
+          const c = readSafe(path);
+          if (!c) return new Response(JSON.stringify([]), { headers: JSON_HEADERS });
+          const lines = c.trim().split("\n").reverse().slice(0, 30);
+          const out = lines.map(line => { try { const j = JSON.parse(line); return { title: j.message || "Voice event", meta: j.timestamp || "", snippet: j.message || "", content: JSON.stringify(j, null, 2) }; } catch { return null; } }).filter(Boolean);
+          return new Response(JSON.stringify(out), { headers: JSON_HEADERS });
+        }
+        if (reqPath === "/api/isas") {
+          const workDir = join(CLAUDE_DIR, "PAI", "MEMORY", "WORK");
+          const out: any[] = [];
+          for (const slug of lsDir(workDir)) {
+            const p = join(workDir, slug, "ISA.md");
+            const c = readSafe(p); if (!c) continue;
+            const fmMatch = c.match(/^---\s*\n([\s\S]*?)\n---/);
+            const fm: Record<string, string> = {};
+            if (fmMatch) { for (const m of fmMatch[1].matchAll(/^(\w+):\s*(.*)$/gm)) fm[m[1]] = m[2].trim(); }
+            out.push({ title: fm.task || slug, meta: `${fm.effort || "E?"} · ${fm.phase || "?"} · ${fm.progress || "?"}`, snippet: shortSnip(c.replace(fmMatch?.[0] || "", ""), 220), content: c });
+          }
+          return new Response(JSON.stringify(out), { headers: JSON_HEADERS });
+        }
+        if (reqPath === "/api/tasks") {
+          const tasksDir = join(CLAUDE_DIR, "tasks");
+          const out: any[] = [];
+          for (const sid of lsDir(tasksDir)) {
+            const d = join(tasksDir, sid);
+            try { if (!statSync(d).isDirectory()) continue; const files = lsDir(d); out.push({ title: `Session ${sid.slice(0, 8)}`, meta: `${files.length} task files`, snippet: files.slice(0, 5).join(" · "), content: files.join("\n") }); } catch {}
+          }
+          return new Response(JSON.stringify(out), { headers: JSON_HEADERS });
+        }
+        if (reqPath === "/api/sessions") {
+          const p = join(CLAUDE_DIR, "PAI", "MEMORY", "STATE", "work.json");
+          const c = readSafe(p);
+          if (!c) return new Response(JSON.stringify([]), { headers: JSON_HEADERS });
+          try { const j = JSON.parse(c); const sessions = Array.isArray(j) ? j : Object.values(j); return new Response(JSON.stringify(sessions.map((s: any) => ({ title: s.task || s.slug || s.sessionId || "Session", meta: `${s.effort || ""} · ${s.phase || ""} · ${s.progress || ""}`, snippet: s.task || s.slug || "", content: JSON.stringify(s, null, 2) }))), { headers: JSON_HEADERS }); } catch { return new Response(JSON.stringify([]), { headers: JSON_HEADERS }); }
+        }
+        if (reqPath === "/api/knowledge") {
+          const baseDir = join(CLAUDE_DIR, "PAI", "MEMORY", "KNOWLEDGE");
+          const out: any[] = [];
+          for (const cat of ["People", "Companies", "Ideas", "Research"]) {
+            const d = join(baseDir, cat);
+            for (const f of lsDir(d).filter(n => n.endsWith(".md")).slice(0, 30)) {
+              const c = readSafe(join(d, f)); if (!c) continue;
+              out.push({ title: f.replace(/\.md$/, ""), meta: cat, snippet: shortSnip(c, 200), content: c });
+            }
+          }
+          return new Response(JSON.stringify(out), { headers: JSON_HEADERS });
+        }
+        if (reqPath === "/api/relationships") {
+          const dir = join(CLAUDE_DIR, "PAI", "MEMORY", "RELATIONSHIP");
+          const out: any[] = [];
+          for (const f of lsDir(dir).filter(n => n.endsWith(".md") || n.endsWith(".jsonl"))) {
+            const c = readSafe(join(dir, f)); if (!c) continue;
+            out.push({ title: f.replace(/\.(md|jsonl)$/, ""), meta: f.endsWith(".jsonl") ? `${c.split("\n").filter(Boolean).length} entries` : "note", snippet: shortSnip(c, 200), content: c.slice(0, 16000) });
+          }
+          return new Response(JSON.stringify(out), { headers: JSON_HEADERS });
+        }
+        if (reqPath === "/api/settings") {
+          const c = readSafe(join(CLAUDE_DIR, "settings.json"));
+          if (!c) return new Response(JSON.stringify([]), { headers: JSON_HEADERS });
+          try { const j = JSON.parse(c); const sections = [{ k: "permissions", v: j.permissions }, { k: "hooks", v: j.hooks }, { k: "enabledPlugins", v: j.enabledPlugins }, { k: "daidentity", v: j.daidentity }, { k: "principal", v: j.principal }, { k: "preferences", v: j.preferences }]; return new Response(JSON.stringify(sections.filter(s => s.v != null).map(s => ({ title: s.k, meta: `settings.json :: ${s.k}`, snippet: JSON.stringify(s.v).slice(0, 200), content: JSON.stringify(s.v, null, 2) }))), { headers: JSON_HEADERS }); } catch { return new Response(JSON.stringify([{ title: "settings.json", meta: "raw", snippet: c.slice(0, 200), content: c }]), { headers: JSON_HEADERS }); }
+        }
+        if (reqPath === "/api/plugins") {
+          const pluginsDir = join(CLAUDE_DIR, "plugins");
+          const out: any[] = [];
+          const known = readSafe(join(pluginsDir, "known_marketplaces.json"));
+          if (known) { try { const j = JSON.parse(known); for (const [name, info] of Object.entries(j)) { out.push({ title: name, meta: "marketplace", snippet: (info as any)?.source?.url || "", content: JSON.stringify(info, null, 2) }); } } catch {} }
+          const cacheDir = join(pluginsDir, "cache");
+          if (existsSync(cacheDir)) { for (const mp of lsDir(cacheDir)) { try { for (const plugin of lsDir(join(cacheDir, mp))) { out.push({ title: `${plugin}@${mp}`, meta: "enabled plugin", snippet: `Cache: plugins/cache/${mp}/${plugin}`, content: `Plugin: ${plugin}\nMarketplace: ${mp}` }); } } catch {} } }
+          return new Response(JSON.stringify(out), { headers: JSON_HEADERS });
+        }
+      } catch (e: any) {
+        return new Response(JSON.stringify({ error: e.message || "Failed" }), { status: 500, headers: JSON_HEADERS });
       }
     }
 
