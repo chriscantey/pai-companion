@@ -1,6 +1,6 @@
 # PAI Upgrade: v3 to v4
 
-> **LEGACY MODULE (July 2026).** This walkthrough is for the PAI v3 → v4 era and is kept for historical installs only. Upstream has since renamed to LifeOS and the repo layout referenced below no longer matches upstream main. If a clone is needed, pin it to the old layout: `git clone --branch v4.0.3 --depth 1 https://github.com/danielmiessler/LifeOS.git ~/upstream/pai`. New setups should skip this module entirely and install pinned v5.0.0 per the [setup guide](https://chriscantey.com/posts/2026-05-12-setting-up-your-personal-ai-assistant-pai-5/).
+> **LEGACY MODULE (July 2026). Do NOT run this on PAI 5.** This walkthrough is for the PAI v3 → v4 era and is kept for historical installs only. Upstream has since renamed to LifeOS and the repo layout referenced below no longer matches upstream main. If a clone is needed, pin it to the old layout: `git clone --branch v4.0.3 --depth 1 https://github.com/danielmiessler/LifeOS.git ~/upstream/pai`. New setups should skip this module entirely and install pinned v5.0.0 per the [setup guide](https://chriscantey.com/posts/2026-05-12-setting-up-your-personal-ai-assistant-pai-5/).
 
 > **For AI Assistants.** If you were directed here by your user to upgrade their PAI installation, follow the phases below. Each phase is independently verifiable. If interrupted, you can resume from any phase.
 

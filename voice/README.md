@@ -1,5 +1,7 @@
 # PAI Voice Module
 
+> **Status (July 2026):** written and tested in the PAI v4 era. Not yet re-validated on PAI v5.0.0 (v5 restructured its voice plumbing under Pulse). The core companion package works on v5 without this module. Treat this module as experimental on v5 until this note is removed.
+
 Local text-to-speech voice notifications for PAI using [Kokoro TTS](https://github.com/hexgrad/kokoro).
 
 Your AI assistant speaks to you: phase announcements, task completions, alerts. Audio streams to any browser via WebSocket. No cloud APIs, no GPU required, fully local and free.
