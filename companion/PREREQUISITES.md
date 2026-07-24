@@ -67,7 +67,7 @@ Do not use a newer release here. Upstream renamed to LifeOS and moved on; this c
 
 ### Step 6: Linux adaptation
 
-Apply the [PAI 5 Linux adaptation](https://gist.github.com/chriscantey/c55d0edf66a3c64dff9857e4aed8b5ec) (the setup guide's Step 7). It fixes the shell configuration, case symlinks, and service setup that v5 needs on Linux. The old v4-era zshrc merge is no longer needed.
+Apply the [PAI 5 Linux adaptation](https://gist.github.com/chriscantey/e2f64257ec3c8cbe07898f6718636332) (the setup guide's Step 7). It fixes the shell configuration, case symlinks, and service setup that v5 needs on Linux. The old v4-era zshrc merge is no longer needed.
 
 ### Verify
 
@@ -164,13 +164,12 @@ cd ~/.claude/skills/Browser && bun run node_modules/.bin/playwright screenshot \
 
 The companion setup (README.md phases) handles everything else:
 
-- Linux statusline compatibility fix
+- Linux adaptation verification
 - IP detection and URL configuration
 - Directory structure creation
 - Portal server deployment (Docker)
-- Core context additions (steering rules, design system, identity)
-- Latest Algorithm installation from upstream
-- Upstream repo cloning
+- Core context additions (steering rules, design system)
+- Pinned upstream reference checkout (v5.0.0)
 - Git initialization
 - Cron job installation
 - Welcome page

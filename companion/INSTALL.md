@@ -16,7 +16,7 @@
 
 ### Phase 0: Linux Adaptation Check
 
-PAI v5.0.0 fixed the old PAI 3/4 Linux quirks upstream (statusline `stat`, multibyte `tr`, Keychain OAuth). What v5 still needs on Linux is covered by the [PAI 5 Linux adaptation](https://gist.github.com/chriscantey/c55d0edf66a3c64dff9857e4aed8b5ec), which the setup guide applies in its Step 7. This phase just verifies it happened.
+PAI v5.0.0 fixed the old PAI 3/4 Linux quirks upstream (statusline `stat`, multibyte `tr`, Keychain OAuth). What v5 still needs on Linux is covered by the [PAI 5 Linux adaptation](https://gist.github.com/chriscantey/e2f64257ec3c8cbe07898f6718636332), which the setup guide applies in its Step 7. This phase just verifies it happened.
 
 **Steps:**
 1. Verify the case-fix symlinks exist:
