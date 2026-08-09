@@ -1,6 +1,18 @@
 .env
+*.env.*
 *.pem
 *.key
+*.json.secret
 node_modules/
 .DS_Store
 Thumbs.db
+
+# PAI local config (generated during install, never commit)
+.vm-ip
+.credentials.json
+google-auth.json
+*-auth.json
+
+# Local test artifacts
+/test-output/
+/local/
