@@ -94,7 +94,9 @@ Replace system-managed portal pages with the latest versions. User-created pages
    SYSTEM_DIRS="skills agents context system clipboard exchange shared welcome algorithm hooks identity isas knowledge observability plugins reflections relationships sessions settings signals tasks"
 
    for dir in $SYSTEM_DIRS; do
-     if [ -d ~/pai-companion/companion/portal/public/$dir ]; then
+     if [ ! -d ~/portal/$dir ]; then
+       echo "  Skipped: $dir/ (not installed, leaving it that way)"
+     elif [ -d ~/pai-companion/companion/portal/public/$dir ]; then
        rm -rf ~/portal/$dir
        cp -r ~/pai-companion/companion/portal/public/$dir ~/portal/
        echo "  Updated: $dir/"
@@ -104,7 +106,12 @@ Replace system-managed portal pages with the latest versions. User-created pages
    done
    ```
 
-2. Update server infrastructure files:
+   **Refresh, never re-add.** A page that is not in `~/portal/` was removed on purpose.
+   A minimal install (`companion/portal/minimal/`) deliberately carries only home, clipboard,
+   and exchange. Restoring the System hub underneath someone would undo that silently, so the
+   loop above updates what is installed and leaves the rest alone.
+
+2. Update server infrastructure files and the home-screen app assets:
    ```bash
    for f in server.ts Dockerfile docker-compose.yml; do
      if [ -f ~/pai-companion/companion/portal/$f ]; then
@@ -112,6 +119,40 @@ Replace system-managed portal pages with the latest versions. User-created pages
        echo "  Updated: $f"
      fi
    done
+
+   for f in manifest.webmanifest icon.svg icon-192.png icon-512.png icon-maskable-512.png apple-touch-icon.png; do
+     if [ -f ~/pai-companion/companion/portal/public/$f ]; then
+       # Do not clobber custom artwork: only add what is missing.
+       if [ -f ~/portal/$f ]; then
+         echo "  Kept:    $f (already present)"
+       else
+         cp ~/pai-companion/companion/portal/public/$f ~/portal/$f
+         echo "  Added:   $f"
+       fi
+     fi
+   done
+   ```
+
+3. If the install predates PWA support, its pages have no manifest or home-screen icon tags.
+   Check the homepage:
+   ```bash
+   grep -q 'rel="manifest"' ~/portal/index.html && echo "PWA tags present" || echo "PWA tags MISSING"
+   ```
+   If missing, insert this block into the `<head>` of **`~/portal/index.html` only**, just
+   before its `<title>` line, which is where the shipped pages carry it. Every other system
+   page was replaced wholesale in step 1 and already has the tags, and pages the user wrote
+   themselves are not ours to edit. Then tell them they can add the portal to their phone's
+   home screen (Phase 5b of INSTALL.md):
+   ```html
+   <link rel="icon" type="image/svg+xml" href="/icon.svg">
+   <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+   <link rel="manifest" href="/manifest.webmanifest">
+   <meta name="theme-color" content="#0d1220">
+   <meta name="apple-mobile-web-app-capable" content="yes">
+   <meta name="mobile-web-app-capable" content="yes">
+   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+   <meta name="apple-mobile-web-app-title" content="Portal">
    ```
 
 4. Patch the portal homepage if it still has the standard quick-links. Read `~/portal/index.html`. If it contains quick-links for `/skills/`, `/agents/`, and `/system/` but NOT `/context/`, add a context link before the system link:
@@ -183,20 +224,24 @@ Run the full verification to confirm everything is working.
    echo -n "Portal responds: "
    curl -sf http://$VM_IP:$PORT/ >/dev/null && { echo "PASS"; PASS=$((PASS+1)); } || { echo "FAIL"; FAIL=$((FAIL+1)); }
 
-   echo -n "Skills page: "
-   curl -sf http://$VM_IP:$PORT/skills/ >/dev/null && { echo "PASS"; PASS=$((PASS+1)); } || { echo "FAIL"; FAIL=$((FAIL+1)); }
-
-   echo -n "Agents page: "
-   curl -sf http://$VM_IP:$PORT/agents/ >/dev/null && { echo "PASS"; PASS=$((PASS+1)); } || { echo "FAIL"; FAIL=$((FAIL+1)); }
-
    echo -n "Exchange page: "
    curl -sf http://$VM_IP:$PORT/exchange/ >/dev/null && { echo "PASS"; PASS=$((PASS+1)); } || { echo "FAIL"; FAIL=$((FAIL+1)); }
 
    echo -n "Clipboard page: "
    curl -sf http://$VM_IP:$PORT/clipboard/ >/dev/null && { echo "PASS"; PASS=$((PASS+1)); } || { echo "FAIL"; FAIL=$((FAIL+1)); }
 
-   echo -n "Welcome page: "
-   curl -sf http://$VM_IP:$PORT/welcome/ >/dev/null && { echo "PASS"; PASS=$((PASS+1)); } || { echo "FAIL"; FAIL=$((FAIL+1)); }
+   # Optional pages: only checked when installed. A minimal install (see
+   # portal/minimal/README.md) has none of them, and Phase 3 correctly refuses to
+   # re-add them, so verifying them unconditionally would report FAIL on an upgrade
+   # that worked exactly as designed.
+   for page in skills agents welcome; do
+     echo -n "$(echo $page | sed 's/^./\U&/') page: "
+     if [ ! -d ~/portal/$page ]; then
+       echo "SKIP (not installed)"
+     else
+       curl -sf http://$VM_IP:$PORT/$page/ >/dev/null && { echo "PASS"; PASS=$((PASS+1)); } || { echo "FAIL"; FAIL=$((FAIL+1)); }
+     fi
+   done
 
    echo -n "Docker container: "
    docker ps | grep -q pai-portal && { echo "PASS"; PASS=$((PASS+1)); } || { echo "FAIL"; FAIL=$((FAIL+1)); }
