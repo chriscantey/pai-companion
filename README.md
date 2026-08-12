@@ -8,7 +8,11 @@ PAI Companion adds a web portal, file exchange, and optional voice notifications
 
 ## Core: Portal + Exchange
 
-The foundation package. Gives your assistant a portal for displaying web pages, dashboards, and reports, a file exchange for sharing files between your machine and the VM, a clipboard page, and a dark theme design system for all visual output. The portal now includes a **System hub**: twenty browsable pages that group your assistant's brain (skills, agents, context, algorithm), work (ISAs, tasks, sessions), memory (knowledge, reflections, signals, observability, relationships), and config (hooks, settings, plugins) into one place.
+The foundation package. Gives your assistant a portal for displaying web pages, dashboards, and reports, a file exchange for sharing files between your machine and the VM, a clipboard page, and a dark theme design system for all visual output. The portal now includes a **System hub**: eighteen browsable pages that group your assistant's brain (skills, agents, context, algorithm), work (ISAs, tasks, sessions), memory (knowledge, reflections, signals, observability, relationships), and config (hooks, settings, plugins) into one place.
+
+The portal installs as a **home-screen app**. It ships a web app manifest and a full icon set, so adding it from Safari or Chrome puts a real icon on your phone that opens full screen with no browser chrome. Setup is Phase 5b of the install guide.
+
+Running something other than PAI v5.0.0? The System hub reads that version's directory layout, so on a different system those pages either sit empty or describe a structure that isn't there. There's a **minimal portal** for that case: home, clipboard, and exchange only, and nothing that assumes what's underneath. See [`companion/portal/minimal/`](companion/portal/minimal/).
 
 The blog post covers what PAI Companion is, what it does, and walks you through getting it running:
 

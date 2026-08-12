@@ -103,6 +103,55 @@ Deploy the portal server as a Docker container. This serves web content from `~/
 
 **Verification:** The curl command returns HTML content (the portal homepage). `docker ps` shows `pai-portal` running.
 
+**Option: minimal portal.** The System hub (eighteen of those pages) reads PAI v5.0.0's own
+directory layout. On anything else it shows empty pages, or describes a structure that is not
+there, which is worse. So there is a minimal variant: home, clipboard, and exchange only, and
+nothing that assumes what is underneath.
+
+**When to take it.** The prerequisites above ask for PAI v5.0.0 because that is what the full
+package is tested against. Take the minimal path when that is not what the user has:
+
+| Their system | Take minimal? | Also skip |
+|--------------|---------------|-----------|
+| PAI v5.0.0 | No, install the full portal | nothing |
+| A newer LifeOS, or a PAI fork | Yes | Phase 8 |
+| No PAI-family install at all, just wants a portal | Yes | Phases 0, 6, 8, 9, 10b, and see below |
+
+Phases 0, 6, 8, 9 and 10b all read or write `~/.claude/PAI/...`, `AISTEERINGRULES.md`,
+`DESIGN.md`, or `settings.json`. On a system without that tree they either fail or create
+files nothing reads. Phase 6 is the one worth replacing rather than skipping: its whole job is
+telling the assistant the portal exists, so put the equivalent instruction wherever that
+assistant reads its own startup context.
+
+**One more step with no PAI tree at all:** `docker-compose.yml` bind-mounts
+`${HOME}/.claude/skills` and `${HOME}/.claude/agents`. If those paths do not exist, Docker
+creates them as **root-owned** empty directories inside the user's home. Delete those two
+lines (and, per `portal/minimal/README.md`, the other three read-only mounts) before the
+first `docker compose up`.
+
+Do this between steps 2 and 3.
+
+**Replace step 1 above** (do not run it and then delete). Copying everything and removing
+the difference would mean an `rm -rf` over names like `tasks/`, `settings/` and `knowledge/`,
+which are ordinary words a user may already have used for their own pages. Copy only what the
+minimal portal needs instead, so nothing is ever deleted:
+
+```bash
+mkdir -p ~/portal
+cp -r ~/pai-companion/companion/portal/public/clipboard ~/portal/
+cp -r ~/pai-companion/companion/portal/public/exchange  ~/portal/
+cp -r ~/pai-companion/companion/portal/public/shared    ~/portal/
+cp ~/pai-companion/companion/portal/public/manifest.webmanifest ~/portal/
+cp ~/pai-companion/companion/portal/public/icon.svg ~/portal/
+cp ~/pai-companion/companion/portal/public/icon-192.png ~/portal/
+cp ~/pai-companion/companion/portal/public/icon-512.png ~/portal/
+cp ~/pai-companion/companion/portal/public/icon-maskable-512.png ~/portal/
+cp ~/pai-companion/companion/portal/public/apple-touch-icon.png ~/portal/
+cp ~/pai-companion/companion/portal/minimal/index.html ~/portal/index.html
+```
+
+Details, how to add pages back, and what the leftover `/api/*` routes still expose: `companion/portal/minimal/README.md`. Read that last part before putting the portal on any network you do not control.
+
 ---
 
 ### Phase 4: Clipboard Verification
@@ -134,6 +183,60 @@ The exchange was deployed in Phase 3. Verify it works.
    ```
 
 **Verification:** Exchange page returns HTML. API returns a JSON array (possibly empty).
+
+---
+
+### Phase 5b: Home-Screen App (PWA)
+
+The portal ships as an installable web app. Added to a phone's home screen it opens full
+screen with its own icon and no browser chrome, which is what makes it feel like an app
+rather than a bookmark. Nothing needs building, because the assets deployed in Phase 3 are all of it.
+
+**What was deployed:**
+
+| File | Role |
+|------|------|
+| `manifest.webmanifest` | Name, standalone display mode, theme colour, icon set |
+| `icon.svg` | Scalable icon, used as the browser favicon |
+| `icon-192.png`, `icon-512.png` | Android / Chrome install icons |
+| `icon-maskable-512.png` | Full-bleed square for Android's adaptive mask. The rounded-corner icons have transparent corners, which a mask would expose as notches |
+| `apple-touch-icon.png` | 180x180, the icon iOS puts on the home screen. Opaque on purpose, iOS does not composite alpha |
+
+Every portal page carries the matching `<link rel="manifest">`, `apple-touch-icon`,
+`theme-color`, and `apple-mobile-web-app-*` tags in its head.
+
+**Steps:**
+1. Verify the manifest is served with the right content type:
+   ```bash
+   curl -sI http://$(cat ~/.vm-ip):8080/manifest.webmanifest \
+     | grep -qi 'content-type: *application/manifest+json' && echo "PASS" || echo "FAIL"
+   ```
+2. Verify every icon resolves:
+   ```bash
+   ICONS_OK=1
+   for f in icon.svg icon-192.png icon-512.png icon-maskable-512.png apple-touch-icon.png; do
+     code=$(curl -s -o /dev/null -w '%{http_code}' http://$(cat ~/.vm-ip):8080/$f)
+     printf "%-24s %s\n" "$f" "$code"
+     [ "$code" = "200" ] || ICONS_OK=0
+   done
+   [ "$ICONS_OK" = "1" ] && echo "Icons: PASS" || echo "Icons: FAIL"
+   ```
+3. Tell the user how to add it, on **iPhone/iPad**: open the portal URL in **Safari**
+   (Chrome on iOS cannot install web apps), tap **Share**, then **Add to Home Screen**.
+   On **Android**: open it in Chrome, then **Install app** or **Add to Home screen**.
+
+**Verification:** Both blocks print PASS.
+
+**Reaching it from a phone.** The portal listens on the VM's LAN address, so a phone can
+only load it on the same network. If the user wants it from anywhere, put the VM on a private
+network overlay such as [Tailscale](https://tailscale.com/) and use the VM's overlay hostname
+in the URL before adding to the home screen. An installed web app keeps the URL it was
+installed with, so pick the address that will still work later.
+
+**Customising the icon.** Replace those files with your own artwork at the same names and
+sizes, then reload. Keep `apple-touch-icon.png` opaque and keep `icon-maskable-512.png`
+full-bleed to the edges. iOS caches aggressively: remove the home-screen icon and re-add it
+to pick up a change.
 
 ---
 
@@ -297,9 +400,12 @@ bun -e "try { Intl.DateTimeFormat('en', { timeZone: '$TZ_VAL' }); console.log('P
    echo "Version marker: $(cat ~/portal/.companion-version)"
    ```
 
-2. Verify the welcome page is accessible:
+2. Verify the welcome page is accessible. A minimal install does not have one, so skip
+   rather than fail:
    ```bash
-   curl -f http://$(cat ~/.vm-ip):8080/welcome/
+   test -d ~/portal/welcome \
+     && curl -f http://$(cat ~/.vm-ip):8080/welcome/ \
+     || echo "SKIP (minimal install has no welcome page)"
    ```
 
 3. Run the full verification checklist:
@@ -339,8 +445,11 @@ grep -qi "Visual-first" ~/.claude/PAI/USER/AISTEERINGRULES.md 2>/dev/null && ech
 echo -n "Design system installed: "
 test -f ~/.claude/PAI/USER/DESIGN.md && echo "PASS" || echo "FAIL"
 
-echo -n "Identity updated: "
-grep -q "Portal" ~/.claude/PAI/USER/IDENTITY.md 2>/dev/null && echo "PASS" || echo "FAIL"
+# Phase 6 writes steering rules, not identity: v5 keeps identity in PRINCIPAL_IDENTITY.md /
+# DA_IDENTITY.md and Step 6a explicitly leaves those alone. The old IDENTITY.md check here
+# could only ever print FAIL.
+echo -n "Portal known to the assistant: "
+grep -q "portal" ~/.claude/CLAUDE.md 2>/dev/null && echo "PASS" || echo "FAIL"
 
 # Phase 7
 echo -n "Design methodology: "
@@ -348,13 +457,18 @@ grep -q "Document Creation" ~/.claude/PAI/USER/DESIGN.md 2>/dev/null && echo "PA
 
 # Phase 8
 echo -n "Upstream PAI: "
-git -C ~/upstream/pai log --oneline -1 >/dev/null 2>&1 && echo "PASS" || echo "FAIL"
+if [ ! -d ~/upstream/pai ]; then echo "SKIP (Phase 8 not run)"; else
+git -C ~/upstream/pai log --oneline -1 >/dev/null 2>&1 && echo "PASS" || echo "FAIL"; fi
 
-echo -n "Upstream Algorithm: "
-git -C ~/upstream/TheAlgorithm log --oneline -1 >/dev/null 2>&1 && echo "PASS" || echo "FAIL"
+# (No check for ~/upstream/TheAlgorithm: no phase clones it, and PAI v5 ships its own
+# Algorithm. A check for something the guide never installs can only print FAIL.)
 
 echo -n "Algorithm installed: "
-test -s ~/.claude/PAI/Algorithm/LATEST && echo "PASS ($(cat ~/.claude/PAI/Algorithm/LATEST))" || echo "FAIL"
+ALG=""
+for f in ~/.claude/PAI/ALGORITHM/LATEST ~/.claude/PAI/Algorithm/LATEST; do
+  [ -s "$f" ] && { ALG=$(cat "$f"); break; }
+done
+[ -n "$ALG" ] && echo "PASS ($ALG)" || echo "FAIL"
 
 # Phase 9
 echo -n "Git tracking (.claude): "
@@ -378,7 +492,8 @@ fi
 
 # Phase 11
 echo -n "Welcome page: "
-curl -sf http://$(cat ~/.vm-ip):8080/welcome/ >/dev/null 2>&1 && echo "PASS" || echo "FAIL"
+if [ ! -d ~/portal/welcome ]; then echo "SKIP (minimal install)"; else
+curl -sf http://$(cat ~/.vm-ip):8080/welcome/ >/dev/null 2>&1 && echo "PASS" || echo "FAIL"; fi
 
 # Version marker
 echo -n "Version marker: "
@@ -387,8 +502,8 @@ test -f ~/portal/.companion-version && echo "PASS ($(cat ~/portal/.companion-ver
 # Safety checks
 echo ""
 echo "=== Safety Checks ==="
-echo -n "No localhost in identity: "
-grep -q "http://localhost" ~/.claude/PAI/USER/IDENTITY.md 2>/dev/null && echo "FAIL (found localhost URL)" || echo "PASS"
+echo -n "No localhost in steering rules: "
+grep -q "http://localhost" ~/.claude/PAI/USER/AISTEERINGRULES.md 2>/dev/null && echo "FAIL (found localhost URL, should be the VM IP)" || echo "PASS"
 
 echo -n "Docker container running: "
 docker ps 2>/dev/null | grep -q "portal" && echo "PASS" || echo "FAIL"
@@ -405,6 +520,6 @@ echo "=== Verification Complete ==="
 > - **Portal:** http://<VM_IP>:8080/ (your AI-created web pages appear here)
 > - **Exchange:** http://<VM_IP>:8080/exchange/ (drag and drop files here)
 > - **Clipboard:** http://<VM_IP>:8080/clipboard/ (copyable text from your assistant)
-> - **Welcome guide:** http://<VM_IP>:8080/welcome/ (getting started prompts)
+> - **Welcome guide:** http://<VM_IP>:8080/welcome/ (getting started prompts) — omit this line if you took the minimal path, which has no welcome page
 >
 > Open any of these URLs in your browser on your host machine. Try asking me to create something for you!
