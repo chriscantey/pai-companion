@@ -40,6 +40,7 @@ const MIME_TYPES: Record<string, string> = {
   ".css": "text/css",
   ".js": "application/javascript",
   ".json": "application/json",
+  ".webmanifest": "application/manifest+json",
   ".png": "image/png",
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
