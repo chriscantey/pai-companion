@@ -38,6 +38,6 @@
   // Footer
   var footer = document.getElementById('pai-footer');
   if (footer) {
-    footer.innerHTML = '<a href="https://github.com/chriscantey/pai-companion" style="color:inherit">PAI Companion</a> &middot; Built on <a href="https://github.com/danielmiessler/PAI" style="color:inherit">PAI</a>';
+    footer.innerHTML = '<a href="https://github.com/chriscantey/pai-companion" style="color:inherit">PAI Companion</a> &middot; Built on <a href="https://github.com/danielmiessler/LifeOS" style="color:inherit">LifeOS</a>';
   }
 })();
